@@ -44,23 +44,33 @@ const Insights = () => {
   const prediction = calculateSmartPredictions(cycles);
   const sorted = [...cycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
-  // Tính độ dài thực tế từng chu kỳ (để vẽ biểu đồ)
-  const cycleLengths: { label: string; length: number }[] = [];
-  for (let i = 1; i < sorted.length; i++) {
+  // Tính độ dài thực tế từng chu kỳ theo kiểu Flo
+  const cycleHistory: { startLabel: string; endLabel: string; length: number }[] = [];
+
+  // Chu kỳ hiện tại (kỳ kinh gần nhất)
+  const latestCycle = sorted[sorted.length - 1];
+  const currentLen = differenceInDays(new Date(), latestCycle.startDate);
+  cycleHistory.push({
+    startLabel: format(latestCycle.startDate, "d 'thg' M"),
+    endLabel: format(new Date(), "d 'thg' M"),
+    length: currentLen > 0 ? currentLen : 1,
+  });
+
+  for (let i = sorted.length - 1; i >= 1; i--) {
     const len = differenceInDays(sorted[i].startDate, sorted[i - 1].startDate);
     if (len > 15 && len < 60) {
-      cycleLengths.push({
-        label: format(sorted[i - 1].startDate, 'MM/yy'),
+      cycleHistory.push({
+        startLabel: format(sorted[i - 1].startDate, "d 'thg' M"),
+        endLabel: format(sorted[i].startDate, "d 'thg' M"),
         length: len,
       });
     }
   }
 
-  const maxLen = cycleLengths.length > 0 ? Math.max(...cycleLengths.map(c => c.length)) : 28;
+  const maxBarLen = cycleHistory.length > 0 ? Math.max(...cycleHistory.map(c => c.length)) : 28;
 
-  // Điểm sức khỏe đơn giản
+  // Điểm sức khỏe
   const healthScore = Math.min(100, 40 + cycles.length * 8 + (prediction.isIrregular ? -15 : 10) + (prediction.confidence === 'high' ? 15 : prediction.confidence === 'medium' ? 8 : 0));
-
   const confidenceText = prediction.confidence === 'high' ? '🟢 Rất chính xác' : prediction.confidence === 'medium' ? '🟡 Khá chính xác' : '🔴 Cần thêm dữ liệu';
 
   return (
@@ -123,35 +133,39 @@ const Insights = () => {
         </p>
       </div>
 
-      {/* Biểu đồ lịch sử */}
-      {cycleLengths.length > 0 && (
-        <div className="card" style={{ marginBottom: '16px' }}>
-          <h2>Lịch sử chu kỳ</h2>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '100px', paddingTop: '10px' }}>
-            {cycleLengths.slice(-8).map((c, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                <div
-                  style={{
-                    width: '100%',
-                    height: `${(c.length / maxLen) * 80}px`,
-                    background: `var(--primary)`,
-                    borderRadius: '4px 4px 0 0',
-                    opacity: 0.7 + (i / cycleLengths.length) * 0.3,
-                    transition: 'all 0.3s',
-                    position: 'relative',
-                  }}
-                  title={`${c.length} ngày`}
-                />
-                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{c.label}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            <span>Cũ nhất</span>
-            <span>Gần nhất</span>
-          </div>
+      {/* Biểu đồ Flo-style: Độ dài chu kỳ */}
+      <div className="card" style={{ marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
+          <h2 style={{ margin: 0 }}>Độ dài chu kỳ</h2>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', letterSpacing: '0.05em' }}>TRUNG BÌNH: {prediction.averageCycleLength} ng</span>
         </div>
-      )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {cycleHistory.map((c, i) => (
+            <div key={i}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                {i === 0 && <span style={{ fontWeight: 'bold', color: 'var(--text-main)', fontSize: '0.75rem' }}>CHU KỲ HIỆN TẠI: </span>}
+                {c.startLabel} - {c.endLabel}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ flex: 1, height: '24px', borderRadius: '12px', background: 'var(--border)', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${(c.length / maxBarLen) * 100}%`,
+                    borderRadius: '12px',
+                    background: i === 0
+                      ? 'linear-gradient(90deg, #e84393, #f8a5c2)'
+                      : 'linear-gradient(90deg, #e84393aa, #f8a5c266)',
+                    minWidth: '48px',
+                    transition: 'width 0.4s ease',
+                  }} />
+                </div>
+                <span style={{ fontWeight: 'bold', fontSize: '0.95rem', minWidth: '56px', textAlign: 'right' }}>{c.length} ngày</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Dự đoán tiếp theo */}
       <div className="card">

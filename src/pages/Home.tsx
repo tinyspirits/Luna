@@ -3,15 +3,14 @@ import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from 
 import type { Cycle } from '../services/firestore';
 import { getCycleDay, getPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
 import { useAuth } from '../contexts/AuthContext';
+import CycleCalendarModal from '../components/CycleCalendarModal';
 
 const Home = () => {
   const { currentUser, profile, viewingUid, usePartnerData, setUsePartnerData } = useAuth();
   const [cycle, setCycle] = useState<Cycle | null>(null);
   const [allCycles, setAllCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showHistoryForm, setShowHistoryForm] = useState(false);
-  const [histStart, setHistStart] = useState('');
-  const [histEnd, setHistEnd] = useState('');
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   useEffect(() => {
     const fetchCycle = async () => {
@@ -41,18 +40,17 @@ const Home = () => {
     setLoading(false);
   };
 
-  const handleAddHistory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser || !histStart || !histEnd) return;
+  const handleAddHistory = async (startDate: Date, endDate: Date) => {
+    if (!currentUser) return;
     setLoading(true);
-    await addHistoricalCycle(currentUser.uid, new Date(histStart), new Date(histEnd), { averageCycleLength: 28, averagePeriodLength: 5 });
+    setShowHistoryModal(false);
+    await addHistoricalCycle(currentUser.uid, startDate, endDate, { averageCycleLength: 28, averagePeriodLength: 5 });
     const [data, history] = await Promise.all([
       getLatestCycle(currentUser.uid),
       getAllCycles(currentUser.uid)
     ]);
     setCycle(data);
     setAllCycles(history);
-    setShowHistoryForm(false);
     setLoading(false);
     alert('Đã thêm chu kỳ cũ thành công!');
   };
@@ -66,6 +64,7 @@ const Home = () => {
   const daysUntilPeriod = smartPred?.daysUntilNextPeriod ?? (cycle ? Math.max(0, 28 - cycleDay) : null);
 
   return (
+    <>
     <div className="animate-fade-in">
       {profile?.partnerUid && (
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'var(--surface)', padding: '4px', borderRadius: '8px' }}>
@@ -163,23 +162,9 @@ const Home = () => {
               </div>
             )}
             
-            <button className="btn-secondary" style={{ width: '100%', marginTop: '10px', background: 'transparent', border: '1px solid var(--border)' }} onClick={() => setShowHistoryForm(!showHistoryForm)}>
-              {showHistoryForm ? 'Đóng' : 'Nhập chu kỳ cũ (Lịch sử)'}
+            <button className="btn-secondary" style={{ width: '100%', marginTop: '10px', background: 'transparent', border: '1px solid var(--border)' }} onClick={() => setShowHistoryModal(true)}>
+              📅 Nhập chu kỳ cũ (Lịch sử)
             </button>
-
-            {showHistoryForm && (
-              <form onSubmit={handleAddHistory} style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px', background: 'var(--background)', borderRadius: '8px' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Ngày bắt đầu</label>
-                  <input type="date" required value={histStart} onChange={e => setHistStart(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Ngày kết thúc</label>
-                  <input type="date" required value={histEnd} onChange={e => setHistEnd(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)' }} />
-                </div>
-                <button type="submit" className="btn-primary" style={{ padding: '8px' }}>Lưu chu kỳ cũ</button>
-              </form>
-            )}
           </>
         )}
       </div>
@@ -203,6 +188,14 @@ const Home = () => {
         )}
       </div>
     </div>
+
+    {showHistoryModal && (
+      <CycleCalendarModal
+        onSave={handleAddHistory}
+        onClose={() => setShowHistoryModal(false)}
+      />
+    )}
+    </>
   );
 };
 
