@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
-import { getCycleDay, getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions, isDatePredicted } from '../utils/cycleCalculations';
+import { getCycleDay, getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions, isDatePredicted, getNextEvents } from '../utils/cycleCalculations';
 import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
@@ -223,13 +223,8 @@ const Home = () => {
 
   const today = new Date();
   const cycleDay = (cycle && allCycles.length > 0) ? getGlobalCycleDay(selectedDate, allCycles) : 0;
-  const cycleDayToday = cycle ? getCycleDay(cycle.startDate, today) : 0;
   const smartPred = allCycles.length > 0 ? calculateSmartPredictions(allCycles) : null;
-  const daysUntilPeriod = smartPred?.daysUntilNextPeriod ?? (cycle ? Math.max(0, 28 - cycleDayToday) : null);
-
-  // Ovulation countdown
-  const daysUntilOvulation = cycle ? differenceInDays(cycle.expectedOvulation, selectedDate) : null;
-  const ovulationDate = cycle?.expectedOvulation;
+  const { nextPeriodDate, nextOvulationDate, daysUntilNextPeriod, daysUntilNextOvulation } = getNextEvents(selectedDate, allCycles);
 
   const isMale = profile?.gender === 'male';
 
@@ -261,6 +256,9 @@ const Home = () => {
   const selectedChance = (cycle && allCycles.length > 0) ? getGlobalPregnancyChance(selectedDate, allCycles) : 'Chưa rõ';
   const isSelectedToday = isSameDay(selectedDate, today);
   const isPredicted = (cycle && allCycles.length > 0) ? isDatePredicted(selectedDate, allCycles) : false;
+  
+  const showCountdownOverride = !isPredicted && ((daysUntilNextPeriod !== null && daysUntilNextPeriod > 0 && daysUntilNextPeriod <= 3) || (daysUntilNextOvulation !== null && daysUntilNextOvulation > 0 && daysUntilNextOvulation <= 3));
+  const isTransparentCircle = isPredicted || showCountdownOverride;
 
   // If male and not connected to a partner, show empty state immediately
   if (isMale && !profile?.partnerUid) {
@@ -429,13 +427,13 @@ const Home = () => {
           width: '250px',
           height: '250px',
           borderRadius: '50%',
-          background: isPredicted ? 'transparent' : (cycle ? 'var(--surface)' : 'var(--border)'),
-          border: isPredicted ? 'none' : `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : (selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh') ? '#e84393' : 'var(--primary-light)'}`,
+          background: isTransparentCircle ? 'transparent' : (cycle ? 'var(--surface)' : 'var(--border)'),
+          border: isTransparentCircle ? 'none' : `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : (selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh') ? '#e84393' : 'var(--primary-light)'}`,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: isPredicted ? 'none' : (selectedChance === 'Trứng rụng' 
+          boxShadow: isTransparentCircle ? 'none' : (selectedChance === 'Trứng rụng' 
             ? '0 0 30px rgba(253, 203, 110, 0.3)' 
             : 'var(--shadow-md)'),
           transform: `translateX(${circleSlide.offset}px)`,
@@ -443,7 +441,16 @@ const Home = () => {
           transition: `${circleSlide.transition}, box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease`,
           willChange: 'transform, opacity'
         }}>
-          {isPredicted ? (
+          {showCountdownOverride ? (
+            <>
+              <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1rem', marginBottom: '8px' }}>
+                {daysUntilNextPeriod !== null && daysUntilNextPeriod <= 3 ? 'Hành kinh sau' : 'Rụng trứng sau'}
+              </span>
+              <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--text-main)', lineHeight: 1.1, fontWeight: 800, textAlign: 'center' }}>
+                {(daysUntilNextPeriod !== null && daysUntilNextPeriod <= 3) ? daysUntilNextPeriod : daysUntilNextOvulation} ngày nữa
+              </h2>
+            </>
+          ) : isPredicted ? (
             <>
               <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1rem', marginBottom: '8px' }}>
                 Dự đoán:
@@ -455,19 +462,19 @@ const Home = () => {
           ) : cycle ? (
             <>
               {/* Main info: ovulation countdown or cycle day */}
-              {daysUntilOvulation !== null && daysUntilOvulation > 0 && selectedChance !== 'Đang Hành Kinh' && selectedChance !== 'Dự đoán hành kinh' ? (
+              {daysUntilNextOvulation !== null && daysUntilNextOvulation > 0 && selectedChance !== 'Đang Hành Kinh' && selectedChance !== 'Dự đoán hành kinh' ? (
                 <>
                   <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
                     Rụng trứng sau
                   </span>
                   <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--secondary)', lineHeight: 1, fontWeight: 800 }}>
-                    {daysUntilOvulation}
+                    {daysUntilNextOvulation}
                   </h2>
                   <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem' }}>
                     ngày
                   </span>
                 </>
-              ) : daysUntilOvulation !== null && daysUntilOvulation <= 0 && selectedChance === 'Trứng rụng' ? (
+              ) : daysUntilNextOvulation !== null && daysUntilNextOvulation <= 0 && selectedChance === 'Trứng rụng' ? (
                 <>
                   <span style={{ color: 'var(--secondary)', fontWeight: 700, fontSize: '0.9rem' }}>
                     🥚 Hôm nay
@@ -528,7 +535,7 @@ const Home = () => {
       </div>
 
       {/* Ovulation date info banner */}
-      {cycle && ovulationDate && (
+      {cycle && nextOvulationDate && (
         <div style={{
           background: 'var(--surface)',
           borderRadius: '12px',
@@ -544,15 +551,15 @@ const Home = () => {
             🥚 Ngày rụng trứng dự kiến
           </span>
           <span style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'var(--secondary)' }}>
-            {format(ovulationDate, 'dd/MM/yyyy')}
+            {format(nextOvulationDate, 'dd/MM/yyyy')}
           </span>
         </div>
       )}
 
       {/* Countdown banner */}
-      {cycle && daysUntilPeriod !== null && (
+      {cycle && daysUntilNextPeriod !== null && (
         <div style={{
-          background: daysUntilPeriod <= 3 ? 'linear-gradient(135deg, var(--primary), var(--primary-light))' : 'var(--surface)',
+          background: daysUntilNextPeriod <= 3 ? 'linear-gradient(135deg, var(--primary), var(--primary-light))' : 'var(--surface)',
           borderRadius: '12px',
           padding: '14px 20px',
           marginBottom: '20px',
@@ -562,9 +569,9 @@ const Home = () => {
           boxShadow: 'var(--shadow-sm)',
           border: '1px solid var(--border)'
         }}>
-          <span style={{ fontSize: '0.9rem', color: daysUntilPeriod <= 3 ? '#fff' : 'var(--text-muted)' }}>Kỳ kinh tiếp theo</span>
-          <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: daysUntilPeriod <= 3 ? '#fff' : 'var(--primary)' }}>
-            {daysUntilPeriod <= 0 ? 'Đã đến hạn!' : `Còn ${daysUntilPeriod} ngày`}
+          <span style={{ fontSize: '0.9rem', color: daysUntilNextPeriod <= 3 ? '#fff' : 'var(--text-muted)' }}>Kỳ kinh tiếp theo</span>
+          <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: daysUntilNextPeriod <= 3 ? '#fff' : 'var(--primary)' }}>
+            {daysUntilNextPeriod <= 0 ? 'Đã đến hạn!' : `Còn ${daysUntilNextPeriod} ngày`}
           </span>
         </div>
       )}
