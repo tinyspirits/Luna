@@ -739,11 +739,11 @@ const Home = () => {
             </div>
             <div className="insight-card symptoms">
               <h4>Triệu chứng có thể gặp</h4>
-              <p>{getSymptomHint(selectedChance).substring(0, 50)}...</p>
+              <p>{getSymptomHint(selectedChance)}</p>
             </div>
             <div className="insight-card tips">
               <h4>Lời khuyên cho bạn</h4>
-              <p>{getDailyTip(selectedChance).substring(0, 50)}...</p>
+              <p>{getDailyTip(selectedChance)}</p>
             </div>
           </div>
         </div>
