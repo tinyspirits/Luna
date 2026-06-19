@@ -59,7 +59,7 @@ const Insights = () => {
   const sorted = [...cycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
   // Tính độ dài thực tế từng chu kỳ theo kiểu Flo
-  const cycleHistory: { id?: string; startLabel: string; endLabel: string; length: number }[] = [];
+  const cycleHistory: { id?: string; startLabel: string; endLabel: string; length: number, year: number }[] = [];
 
   // Chu kỳ hiện tại (kỳ kinh gần nhất)
   const latestCycle = sorted[sorted.length - 1];
@@ -69,6 +69,7 @@ const Insights = () => {
     startLabel: format(latestCycle.startDate, "d 'thg' M"),
     endLabel: format(new Date(), "d 'thg' M"),
     length: currentLen > 0 ? currentLen : 1,
+    year: latestCycle.startDate.getFullYear(),
   });
 
   for (let i = sorted.length - 1; i >= 1; i--) {
@@ -79,11 +80,20 @@ const Insights = () => {
         startLabel: format(sorted[i - 1].startDate, "d 'thg' M"),
         endLabel: format(sorted[i].startDate, "d 'thg' M"),
         length: len,
+        year: sorted[i - 1].startDate.getFullYear(),
       });
     }
   }
 
   const maxBarLen = cycleHistory.length > 0 ? Math.max(...cycleHistory.map(c => c.length)) : 28;
+
+  const groupedHistory = cycleHistory.reduce((acc, curr) => {
+    if (!acc[curr.year]) acc[curr.year] = [];
+    acc[curr.year].push(curr);
+    return acc;
+  }, {} as Record<number, typeof cycleHistory>);
+  
+  const sortedYears = Object.keys(groupedHistory).map(Number).sort((a, b) => b - a);
 
   // Điểm sức khỏe
   const healthScore = Math.min(100, 40 + cycles.length * 8 + (prediction.isIrregular ? -15 : 10) + (prediction.confidence === 'high' ? 15 : prediction.confidence === 'medium' ? 8 : 0));
@@ -156,34 +166,44 @@ const Insights = () => {
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', letterSpacing: '0.05em' }}>TRUNG BÌNH: {prediction.averageCycleLength} ng</span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {cycleHistory.map((c, i) => (
-            <div key={i}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  {i === 0 && <span style={{ fontWeight: 'bold', color: 'var(--text-main)', fontSize: '0.75rem' }}>CHU KỲ HIỆN TẠI: </span>}
-                  {c.startLabel} - {c.endLabel}
-                </div>
-                {c.id && currentUser?.uid === viewingUid && (
-                  <button onClick={() => handleDeleteCycle(c.id!)} style={{ color: 'var(--text-muted)', padding: '4px', cursor: 'pointer', background: 'transparent', border: 'none' }}>
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ flex: 1, height: '24px', borderRadius: '12px', background: 'var(--border)', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${(c.length / maxBarLen) * 100}%`,
-                    borderRadius: '12px',
-                    background: i === 0
-                      ? 'linear-gradient(90deg, #e84393, #f8a5c2)'
-                      : 'linear-gradient(90deg, #e84393aa, #f8a5c266)',
-                    minWidth: '48px',
-                    transition: 'width 0.4s ease',
-                  }} />
-                </div>
-                <span style={{ fontWeight: 'bold', fontSize: '0.95rem', minWidth: '56px', textAlign: 'right' }}>{c.length} ngày</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {sortedYears.map((year, yIdx) => (
+            <div key={year}>
+              <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>Năm {year}</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {groupedHistory[year].map((c, i) => {
+                  const isCurrent = yIdx === 0 && i === 0;
+                  return (
+                    <div key={i}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {isCurrent && <span style={{ fontWeight: 'bold', color: 'var(--text-main)', fontSize: '0.75rem' }}>CHU KỲ HIỆN TẠI: </span>}
+                          {c.startLabel} - {c.endLabel}
+                        </div>
+                        {c.id && currentUser?.uid === viewingUid && (
+                          <button onClick={() => handleDeleteCycle(c.id!)} style={{ color: 'var(--text-muted)', padding: '4px', cursor: 'pointer', background: 'transparent', border: 'none' }}>
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ flex: 1, height: '24px', borderRadius: '12px', background: 'var(--border)', position: 'relative', overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%',
+                            width: `${(c.length / maxBarLen) * 100}%`,
+                            borderRadius: '12px',
+                            background: isCurrent
+                              ? 'linear-gradient(90deg, #e84393, #f8a5c2)'
+                              : 'linear-gradient(90deg, #e84393aa, #f8a5c266)',
+                            minWidth: '48px',
+                            transition: 'width 0.4s ease',
+                          }} />
+                        </div>
+                        <span style={{ fontWeight: 'bold', fontSize: '0.95rem', minWidth: '56px', textAlign: 'right' }}>{c.length} ngày</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
