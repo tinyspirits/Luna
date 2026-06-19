@@ -102,6 +102,67 @@ export const getCycleDay = (lastPeriodStartDate: Date, currentDate: Date) => {
 
 export type PregnancyChance = 'Trứng rụng' | 'Cao' | 'An toàn' | 'Đang Hành Kinh' | 'Chưa rõ';
 
+export const predictFutureCycles = (cycles: Cycle[], count: number = 6) => {
+  if (cycles.length === 0) return [];
+  const pred = calculateSmartPredictions(cycles);
+  const avgLen = pred.averageCycleLength;
+  const avgPeriod = 5;
+  const sorted = [...cycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const lastStart = sorted[sorted.length - 1].startDate;
+  const future: { start: Date; end: Date; ovulation: Date }[] = [];
+  for (let i = 1; i <= count; i++) {
+    const start = addDays(lastStart, avgLen * i);
+    future.push({
+      start,
+      end: addDays(start, avgPeriod - 1),
+      ovulation: addDays(start, avgLen - 14),
+    });
+  }
+  return future;
+};
+
+export const getGlobalPregnancyChance = (currentDate: Date, cycles: Cycle[]): PregnancyChance => {
+  if (cycles.length === 0) return 'Chưa rõ';
+  
+  // Check historical/current cycles
+  for (const c of cycles) {
+    const isBleeding = isWithinInterval(currentDate, {
+      start: c.startDate,
+      end: addDays(c.startDate, 4) // assume 5 days
+    });
+    if (isBleeding) return 'Đang Hành Kinh';
+
+    const isOvulation = isSameDay(currentDate, c.expectedOvulation);
+    if (isOvulation) return 'Trứng rụng';
+
+    const isFertile = isWithinInterval(currentDate, {
+      start: subDays(c.expectedOvulation, 5),
+      end: addDays(c.expectedOvulation, 1)
+    });
+    if (isFertile) return 'Cao';
+  }
+
+  // Check future predicted cycles
+  const future = predictFutureCycles(cycles, 12);
+  for (const f of future) {
+    const isBleeding = isWithinInterval(currentDate, {
+      start: f.start,
+      end: f.end
+    });
+    if (isBleeding) return 'Đang Hành Kinh';
+
+    const isOvulation = isSameDay(currentDate, f.ovulation);
+    if (isOvulation) return 'Trứng rụng';
+
+    const isFertile = isWithinInterval(currentDate, {
+      start: subDays(f.ovulation, 5),
+      end: addDays(f.ovulation, 1)
+    });
+    if (isFertile) return 'Cao';
+  }
+
+  return 'An toàn';
+};
 export const getPregnancyChance = (currentDate: Date, cycle: Cycle): PregnancyChance => {
   const isBleeding = isWithinInterval(currentDate, {
     start: cycle.expectedNextPeriod,

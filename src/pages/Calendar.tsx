@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
-import { getLatestCycle } from '../services/firestore';
+import { getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
-import { getPregnancyChance } from '../utils/cycleCalculations';
+import { getGlobalPregnancyChance } from '../utils/cycleCalculations';
 import { useAuth } from '../contexts/AuthContext';
 
 const CalendarPage = () => {
   const { viewingUid, usePartnerData, setUsePartnerData, profile } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [cycle, setCycle] = useState<Cycle | null>(null);
+  const [cycles, setCycles] = useState<Cycle[]>([]);
 
   useEffect(() => {
     const fetchCycle = async () => {
       if (!viewingUid) return;
-      const data = await getLatestCycle(viewingUid);
-      setCycle(data);
+      const data = await getAllCycles(viewingUid);
+      setCycles(data);
     };
     fetchCycle();
   }, [viewingUid]);
@@ -59,8 +59,8 @@ const CalendarPage = () => {
           {days.map(day => {
             let chance = 'Chưa rõ';
 
-            if (cycle) {
-              chance = getPregnancyChance(day, cycle);
+            if (cycles.length > 0) {
+              chance = getGlobalPregnancyChance(day, cycles);
             }
 
             const isPeriod = chance === 'Đang Hành Kinh';
