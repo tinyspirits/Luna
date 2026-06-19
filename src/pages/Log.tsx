@@ -97,11 +97,6 @@ const Log = () => {
         <DatePicker value={date} onChange={setDate} />
       </div>
 
-      <div className="card">
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Ngày</label>
-        <DatePicker value={date} onChange={setDate} />
-      </div>
-
       {usePartnerData ? (
         <div className="card">
           <h2 style={{ marginBottom: '16px' }}>Chi tiết ngày {format(new Date(date), "dd/MM/yyyy")}</h2>
