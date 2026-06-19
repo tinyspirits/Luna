@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --primary: #9b59b6;
   --primary-hover: #8e44ad;
   --secondary: #fbc531;
@@ -22,6 +23,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     --background: #1e1e24;
     --surface: #2b2b36;
     --text-main: #f1f2f6;
@@ -57,6 +59,17 @@ button {
   border: none;
   background: none;
   font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+input[type="date"] {
+  color-scheme: inherit;
 }
 
 /* Layout */
