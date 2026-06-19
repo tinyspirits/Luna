@@ -58,7 +58,7 @@ const PublicRoute = ({ children }: { children: ReactElement }) => {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <div className="app-container">
           <div className="content-area">
             <Routes>
