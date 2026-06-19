@@ -22,6 +22,7 @@ export interface Cycle {
 export interface UserProfile {
   uid: string;
   partnerUid?: string;
+  partnerName?: string;
   themeBackground?: string;
   periodIcon?: string;
 }
@@ -57,10 +58,10 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   return null;
 };
 
-export const linkPartner = async (userId: string, partnerUid: string) => {
+export const linkPartner = async (userId: string, partnerUid: string, partnerName?: string) => {
   try {
     const userRef = doc(db, 'users', userId);
-    await setDoc(userRef, { partnerUid }, { merge: true });
+    await setDoc(userRef, { partnerUid, partnerName: partnerName || 'Bạn đời' }, { merge: true });
     return true;
   } catch (error) {
     console.error("Error linking partner:", error);

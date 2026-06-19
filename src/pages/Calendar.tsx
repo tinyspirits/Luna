@@ -5,7 +5,7 @@ import type { Cycle } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
 
 const CalendarPage = () => {
-  const { viewingUid, usePartnerData, profile } = useAuth();
+  const { viewingUid, usePartnerData, setUsePartnerData, profile } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [cycle, setCycle] = useState<Cycle | null>(null);
 
@@ -34,7 +34,14 @@ const CalendarPage = () => {
 
   return (
     <div className="animate-fade-in">
-      <h1>Lịch {usePartnerData && '(Bạn đời)'}</h1>
+      {profile?.partnerUid && (
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'var(--surface)', padding: '4px', borderRadius: '8px' }}>
+          <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: !usePartnerData ? 'var(--primary)' : 'transparent', color: !usePartnerData ? 'white' : 'var(--text-main)', fontWeight: !usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(false)}>Của mình</button>
+          <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: usePartnerData ? 'var(--secondary)' : 'transparent', color: usePartnerData ? 'var(--text-main)' : 'var(--text-main)', fontWeight: usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(true)}>Của {profile?.partnerName || 'bạn đời'}</button>
+        </div>
+      )}
+
+      <h1>Lịch {usePartnerData && `(${profile?.partnerName || 'Bạn đời'})`}</h1>
       
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>

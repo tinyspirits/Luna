@@ -17,6 +17,7 @@ const ICONS = ['🩸', '🐷', '🌸', '🌙', '🔴', '💧', '🧸'];
 const Settings = () => {
   const { currentUser, profile, reloadProfile } = useAuth();
   const [partnerCode, setPartnerCode] = useState('');
+  const [partnerName, setPartnerName] = useState('');
   const [linking, setLinking] = useState(false);
   const [savingTheme, setSavingTheme] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -32,7 +33,7 @@ const Settings = () => {
   const handleLinkPartner = async () => {
     if (!currentUser || !partnerCode.trim()) return;
     setLinking(true);
-    const success = await linkPartner(currentUser.uid, partnerCode.trim());
+    const success = await linkPartner(currentUser.uid, partnerCode.trim(), partnerName.trim());
     if (success) {
       await reloadProfile();
       alert('Đã kết nối với bạn đời thành công!');
@@ -104,19 +105,28 @@ const Settings = () => {
         </div>
 
         {profile?.partnerUid ? (
-          <p style={{ color: 'var(--secondary)', fontWeight: 600 }}>✅ Đã kết nối với bạn đời ({profile.partnerUid.substring(0, 8)}...)</p>
+          <p style={{ color: 'var(--secondary)', fontWeight: 600 }}>✅ Đã kết nối với {profile.partnerName || 'bạn đời'} ({profile.partnerUid.substring(0, 8)}...)</p>
         ) : (
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <input
               type="text"
-              placeholder="Nhập mã của bạn đời..."
-              value={partnerCode}
-              onChange={(e) => setPartnerCode(e.target.value)}
-              style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
+              placeholder="Tên gọi của người ấy (Ví dụ: Bé iu, Chồng...)"
+              value={partnerName}
+              onChange={(e) => setPartnerName(e.target.value)}
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
             />
-            <button className="btn-secondary" onClick={handleLinkPartner} disabled={linking}>
-              {linking ? 'Đang nối...' : 'Kết nối'}
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                placeholder="Nhập mã của bạn đời..."
+                value={partnerCode}
+                onChange={(e) => setPartnerCode(e.target.value)}
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
+              />
+              <button className="btn-secondary" onClick={handleLinkPartner} disabled={linking}>
+                {linking ? 'Đang nối...' : 'Kết nối'}
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -55,12 +55,12 @@ const Home = () => {
       {profile?.partnerUid && (
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'var(--surface)', padding: '4px', borderRadius: '8px' }}>
           <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: !usePartnerData ? 'var(--primary)' : 'transparent', color: !usePartnerData ? 'white' : 'var(--text-main)', fontWeight: !usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(false)}>Của mình</button>
-          <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: usePartnerData ? 'var(--secondary)' : 'transparent', color: usePartnerData ? 'var(--text-main)' : 'var(--text-main)', fontWeight: usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(true)}>Của bạn đời</button>
+          <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: usePartnerData ? 'var(--secondary)' : 'transparent', color: usePartnerData ? 'var(--text-main)' : 'var(--text-main)', fontWeight: usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(true)}>Của {profile?.partnerName || 'bạn đời'}</button>
         </div>
       )}
 
-      <h1>{usePartnerData ? 'Chu kỳ của Partner 👋' : 'Chào buổi sáng 👋'}</h1>
-      <p style={{ marginBottom: '24px' }}>Hôm nay cơ thể {usePartnerData ? 'bạn đời của bạn' : 'bạn'} cảm thấy thế nào?</p>
+      <h1>{usePartnerData ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : 'Chào buổi sáng 👋'}</h1>
+      <p style={{ marginBottom: '24px' }}>Hôm nay cơ thể {usePartnerData ? (profile?.partnerName || 'người ấy') : 'bạn'} cảm thấy thế nào?</p>
 
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
         {/* Simple Cycle Wheel CSS Implementation */}
