@@ -63,7 +63,7 @@ const CalendarPage = () => {
               chance = getGlobalPregnancyChance(day, cycles);
             }
 
-            const isPeriod = chance === 'Đang Hành Kinh';
+            const isPeriod = chance === 'Đang Hành Kinh' || chance === 'Dự đoán hành kinh';
             const isOvulation = chance === 'Trứng rụng';
             const isFertile = chance === 'Cao';
             const isLow = chance === 'Thấp';

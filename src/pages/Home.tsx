@@ -428,7 +428,7 @@ const Home = () => {
           height: '250px',
           borderRadius: '50%',
           background: cycle ? 'var(--surface)' : 'var(--border)',
-          border: `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : selectedChance === 'Đang Hành Kinh' ? '#e84393' : 'var(--primary-light)'}`,
+          border: `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : (selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh') ? '#e84393' : 'var(--primary-light)'}`,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -444,7 +444,7 @@ const Home = () => {
           {cycle ? (
             <>
               {/* Main info: ovulation countdown or cycle day */}
-              {daysUntilOvulation !== null && daysUntilOvulation > 0 && selectedChance !== 'Đang Hành Kinh' ? (
+              {daysUntilOvulation !== null && daysUntilOvulation > 0 && selectedChance !== 'Đang Hành Kinh' && selectedChance !== 'Dự đoán hành kinh' ? (
                 <>
                   <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
                     Rụng trứng sau
@@ -825,7 +825,7 @@ const Home = () => {
                 {selectedChance === 'Cao' && 'Bạn đang trong cửa sổ thụ thai (khoảng thời gian dễ mang thai nhất trong tháng). Hãy lưu ý nhé!'}
                 {selectedChance === 'Thấp' && 'Khả năng thụ thai thấp, tuy nhiên vẫn có một phần trăm nhỏ xác suất xảy ra do thời gian rụng trứng có thể xê dịch.'}
                 {selectedChance === 'An toàn' && 'Hôm nay là ngày an toàn. Tỉ lệ mang thai gần như bằng 0, cơ thể đang ở trạng thái ổn định.'}
-                {selectedChance === 'Đang Hành Kinh' && 'Đang trong kỳ kinh nguyệt. Hãy giữ ấm cơ thể và nghỉ ngơi nhiều hơn.'}
+                {(selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh') && 'Đang trong kỳ kinh nguyệt (hoặc dự kiến). Hãy giữ ấm cơ thể và nghỉ ngơi nhiều hơn.'}
               </p>
             </div>
 
