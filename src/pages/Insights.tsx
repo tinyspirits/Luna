@@ -219,7 +219,8 @@ const Insights = () => {
         </h2>
         <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
           <p><strong>Ngày rụng trứng:</strong> Thường xảy ra vào <strong>ngày thứ 14 trước kỳ kinh tiếp theo</strong>. Cơ thể chỉ rụng trứng 1 lần duy nhất trong mỗi chu kỳ.</p>
-          <p style={{ marginTop: '8px' }}><strong>Cửa sổ thụ thai:</strong> Tinh trùng sống được tới 5 ngày, còn trứng chỉ sống 12-24h. Vì vậy, "cửa sổ thụ thai" bắt đầu từ <strong>5 ngày trước rụng trứng</strong> và khép lại ngay sau ngày trứng rụng 1 ngày.</p>
+          <p style={{ marginTop: '8px' }}><strong>Cửa sổ thụ thai:</strong> Tinh trùng sống được tới 5 ngày, còn trứng chỉ sống 12-24h (theo <a href="https://www.britannica.com/science/menstrual-cycle" target="_blank" rel="noopener noreferrer" style={{color: 'var(--primary)', textDecoration: 'underline'}}>Britannica</a>). Vì vậy, "cửa sổ thụ thai" bắt đầu từ <strong>5 ngày trước rụng trứng</strong> và khép lại ngay sau ngày trứng rụng 1 ngày.</p>
+          <p style={{ marginTop: '8px' }}><strong>Sức khỏe tâm lý:</strong> Các chức năng của vùng dưới đồi (hypothalamus) liên kết chặt chẽ với cảm xúc. Do đó, căng thẳng và stress có thể trực tiếp làm trì hoãn quá trình rụng trứng và gây rối loạn chu kỳ kinh nguyệt.</p>
           <p style={{ marginTop: '8px' }}><strong>Dấu hiệu nhận biết:</strong> Để xác định chính xác nhất, bạn có thể dựa vào que thử rụng trứng, thân nhiệt (BBT tăng nhẹ sau khi rụng) hoặc dịch nhầy cổ tử cung (chất dịch trong, dai như lòng trắng trứng sống là lúc dễ thụ thai nhất).</p>
         </div>
       </div>
