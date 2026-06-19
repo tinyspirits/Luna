@@ -53,7 +53,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [usePartnerDataState, setUsePartnerData] = useState(false);
   const isMale = profile?.gender === 'male';
-  const usePartnerData = isMale ? true : usePartnerDataState;
+  const partnerIsMale = profile?.partnerGender === 'male';
+  const usePartnerData = isMale ? true : (partnerIsMale ? false : usePartnerDataState);
   const viewingUid = (usePartnerData && profile?.partnerUid) ? profile.partnerUid : (currentUser?.uid || '');
 
   const value = {

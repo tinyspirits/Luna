@@ -104,6 +104,18 @@ export const updateUserProfile = async (userId: string, data: Partial<UserProfil
   try {
     const userRef = doc(db, 'users', userId);
     await setDoc(userRef, data, { merge: true });
+
+    // If gender was updated and user has a partner, update the partner's partnerGender
+    if (data.gender) {
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.partnerUid) {
+          const partnerRef = doc(db, 'users', userData.partnerUid);
+          await setDoc(partnerRef, { partnerGender: data.gender }, { merge: true });
+        }
+      }
+    }
     return true;
   } catch (error) {
     console.error("Error updating profile:", error);
