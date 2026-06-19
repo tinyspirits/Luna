@@ -11,17 +11,31 @@ import { useEffect } from 'react';
 
 // Wrapper để quản lý Background theo cá nhân hóa
 const ThemeWrapper = ({ children }: { children: ReactElement }) => {
-  const { profile } = useAuth();
+  const { profile, currentUser } = useAuth();
+  
   useEffect(() => {
-    if (profile?.themeBackground) {
-      document.body.style.background = profile.themeBackground;
+    let bg = profile?.themeBackground;
+    
+    // Nếu chế độ là local, lấy chuỗi base64 từ LocalStorage
+    if (bg === 'local' && currentUser) {
+      const localBg = localStorage.getItem(`custom_bg_${currentUser.uid}`);
+      if (localBg) {
+        bg = `url(${localBg})`;
+      } else {
+        bg = 'var(--background)'; // Fallback nếu không thấy ảnh
+      }
+    }
+
+    if (bg && bg !== 'var(--background)') {
+      document.body.style.background = bg;
       document.body.style.backgroundSize = 'cover';
       document.body.style.backgroundPosition = 'center';
       document.body.style.backgroundAttachment = 'fixed';
     } else {
       document.body.style.background = 'var(--background)';
     }
-  }, [profile?.themeBackground]);
+  }, [profile?.themeBackground, currentUser]);
+  
   return <>{children}</>;
 };
 

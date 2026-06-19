@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { linkPartner, updateUserProfile, uploadBackgroundImage } from '../services/firestore';
+import { linkPartner, updateUserProfile } from '../services/firestore';
 import { UploadCloud } from 'lucide-react';
 
 const PRESET_BGS = [
@@ -58,20 +58,29 @@ const Settings = () => {
     const file = e.target.files?.[0];
     if (!file || !currentUser) return;
     
-    // Kiểm tra dung lượng file (giới hạn 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Vui lòng chọn ảnh có kích thước dưới 5MB.');
+    // Giới hạn ảnh 3MB để tránh tràn bộ nhớ LocalStorage
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Vui lòng chọn ảnh nhỏ hơn 3MB (do lưu trữ trực tiếp trên máy).');
       return;
     }
 
     setUploadingImage(true);
-    const url = await uploadBackgroundImage(currentUser.uid, file);
-    if (url) {
-      await reloadProfile();
-    } else {
-      alert('Lỗi khi tải ảnh lên. Hãy kiểm tra lại Firebase Storage Rules.');
-    }
-    setUploadingImage(false);
+    
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64String = event.target?.result as string;
+      try {
+        localStorage.setItem(`custom_bg_${currentUser.uid}`, base64String);
+        await updateUserProfile(currentUser.uid, { themeBackground: 'local' });
+        await reloadProfile();
+      } catch (err) {
+        console.error(err);
+        alert('Không thể lưu ảnh. Có thể ảnh quá lớn so với bộ nhớ tạm của trình duyệt.');
+      } finally {
+        setUploadingImage(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (

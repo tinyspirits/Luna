@@ -1,6 +1,5 @@
 import { doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { db } from '../firebase';
 import { calculatePredictions } from '../utils/cycleCalculations';
 import type { UserSettings } from '../utils/cycleCalculations';
 
@@ -77,22 +76,6 @@ export const updateUserProfile = async (userId: string, data: Partial<UserProfil
   } catch (error) {
     console.error("Error updating profile:", error);
     return false;
-  }
-};
-
-export const uploadBackgroundImage = async (userId: string, file: File): Promise<string | null> => {
-  try {
-    // Tự động thêm timestamp để tránh cache trình duyệt khi đổi ảnh mới
-    const fileRef = ref(storage, `users/${userId}/background_${Date.now()}`);
-    await uploadBytes(fileRef, file);
-    const downloadUrl = await getDownloadURL(fileRef);
-    
-    // Lưu URL vào Profile
-    await updateUserProfile(userId, { themeBackground: `url(${downloadUrl})` });
-    return downloadUrl;
-  } catch (error) {
-    console.error("Error uploading image:", error);
-    return null;
   }
 };
 
