@@ -22,6 +22,8 @@ export interface Cycle {
 export interface UserProfile {
   uid: string;
   partnerUid?: string;
+  themeBackground?: string;
+  periodIcon?: string;
 }
 
 // Convert Firestore Timestamp to Date, safely
@@ -62,6 +64,17 @@ export const linkPartner = async (userId: string, partnerUid: string) => {
     return true;
   } catch (error) {
     console.error("Error linking partner:", error);
+    return false;
+  }
+};
+
+export const updateUserProfile = async (userId: string, data: Partial<UserProfile>) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, data, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("Error updating profile:", error);
     return false;
   }
 };

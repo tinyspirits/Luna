@@ -1,12 +1,16 @@
 :root {
-  --primary: #ff6b81;
-  --primary-light: #ff9fb0;
-  --secondary: #7bed9f;
-  --background: #fffafa;
-  --surface: #ffffff;
-  --text-main: #2f3542;
+  --primary: #9b59b6;
+  --primary-hover: #8e44ad;
+  --secondary: #fbc531;
+  --secondary-hover: #e1b12c;
+  --background: #f5f6fa;
+  --surface: rgba(255, 255, 255, 0.7);
+  --text-main: #2f3640;
+  --text-light: #718093;
   --text-muted: #747d8c;
-  --border: #f1f2f6;
+  --border: rgba(220, 221, 225, 0.5);
+  --danger: #e84118;
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
   --shadow-lg: 0 8px 32px rgba(255, 107, 129, 0.15);
@@ -34,10 +38,12 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--background);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--background);
   color: var(--text-main);
-  line-height: 1.5;
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background 0.5s ease-in-out;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -55,21 +61,22 @@ button {
 
 /* Layout */
 .app-container {
-  max-width: 480px; /* Mobile app feel */
+  max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-  position: relative;
   display: flex;
   flex-direction: column;
+  background: transparent;
+  box-shadow: none;
+  position: relative;
 }
 
 .content-area {
   flex: 1;
-  padding: 24px;
-  padding-bottom: 80px; /* Space for nav */
+  padding: 20px;
+  padding-bottom: 90px;
   overflow-y: auto;
+  backdrop-filter: blur(4px);
 }
 
 /* Typography */
@@ -80,11 +87,13 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 /* UI Components */
 .card {
   background: var(--surface);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   padding: 20px;
-  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+  box-shadow: var(--glass-shadow);
   border: 1px solid var(--border);
-  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition: var(--transition);
 }
 
@@ -94,7 +103,7 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), #ff4757);
+  background: linear-gradient(135deg, var(--primary), #a29bfe);
   color: white;
   padding: 14px 24px;
   border-radius: var(--radius-full);
@@ -111,7 +120,7 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 
 .btn-primary:hover {
   transform: scale(1.02);
-  box-shadow: 0 10px 40px rgba(255, 71, 87, 0.25);
+  box-shadow: 0 10px 40px rgba(155, 89, 182, 0.25);
 }
 
 .btn-secondary {
@@ -132,16 +141,19 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
   background: var(--surface);
-  border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-around;
-  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
-  z-index: 100;
+  padding: 12px 0 24px 0;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
 }
 
 .nav-item {
@@ -156,6 +168,34 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 
 .nav-item.active {
   color: var(--primary);
+}
+
+/* Calendar Styles */
+.calendar-cell {
+  padding: 10px 0;
+  border-radius: 50%;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.calendar-cell.today {
+  font-weight: bold;
+  border: 2px solid var(--text-main);
+}
+
+.calendar-cell.disabled {
+  opacity: 0.3;
+}
+
+.calendar-cell.period {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+}
+
+.calendar-cell.ovulation {
+  background: var(--secondary);
+  color: var(--text-main);
 }
 
 /* Animations */

@@ -2,12 +2,23 @@ import { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { linkPartner } from '../services/firestore';
+import { linkPartner, updateUserProfile } from '../services/firestore';
+
+const PRESET_BGS = [
+  { name: 'Mặc định', value: '' },
+  { name: 'Luna Dạ Quang', value: 'linear-gradient(to bottom, #192a56, #273c75)' },
+  { name: 'Hoàng hôn', value: 'linear-gradient(to bottom, #f8a5c2, #f5cd79)' },
+  { name: 'Rừng đêm', value: 'linear-gradient(to bottom, #130f40, #30336b)' },
+];
+
+const ICONS = ['🩸', '🐷', '🌸', '🌙', '🔴', '💧', '🧸'];
 
 const Settings = () => {
   const { currentUser, profile, reloadProfile } = useAuth();
   const [partnerCode, setPartnerCode] = useState('');
   const [linking, setLinking] = useState(false);
+  const [customBg, setCustomBg] = useState('');
+  const [savingTheme, setSavingTheme] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -28,6 +39,18 @@ const Settings = () => {
       alert('Có lỗi xảy ra khi kết nối. Vui lòng thử lại.');
     }
     setLinking(false);
+  };
+
+  const handleUpdateTheme = async (bg: string, icon: string) => {
+    if (!currentUser) return;
+    setSavingTheme(true);
+    const success = await updateUserProfile(currentUser.uid, { themeBackground: bg, periodIcon: icon });
+    if (success) {
+      await reloadProfile();
+    } else {
+      alert('Lỗi khi lưu giao diện!');
+    }
+    setSavingTheme(false);
   };
 
   return (
@@ -66,6 +89,69 @@ const Settings = () => {
             </button>
           </div>
         )}
+      </div>
+
+      <div className="card">
+        <h2>Giao diện & Cá nhân hóa</h2>
+        
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>Hình nền</h3>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+            {PRESET_BGS.map(bg => (
+              <button 
+                key={bg.name}
+                onClick={() => handleUpdateTheme(bg.value, profile?.periodIcon || '🩸')}
+                style={{ 
+                  padding: '8px 12px', 
+                  borderRadius: '20px', 
+                  border: profile?.themeBackground === bg.value ? '2px solid var(--primary)' : '1px solid var(--border)',
+                  background: bg.value || 'var(--surface)',
+                  color: bg.value && bg.value !== 'var(--background)' ? '#fff' : 'inherit'
+                }}
+              >
+                {bg.name}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input 
+              type="text" 
+              placeholder="Hoặc dán URL hình ảnh (http...)"
+              value={customBg}
+              onChange={e => setCustomBg(e.target.value)}
+              style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
+            />
+            <button 
+              className="btn-secondary" 
+              onClick={() => handleUpdateTheme(`url(${customBg})`, profile?.periodIcon || '🩸')}
+              disabled={!customBg || savingTheme}
+            >
+              Áp dụng
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>Biểu tượng Hành kinh</h3>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '1.5rem', flexWrap: 'wrap' }}>
+            {ICONS.map(icon => (
+              <button 
+                key={icon}
+                onClick={() => handleUpdateTheme(profile?.themeBackground || '', icon)}
+                style={{ 
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  opacity: (profile?.periodIcon || '🩸') === icon ? 1 : 0.4,
+                  transform: (profile?.periodIcon || '🩸') === icon ? 'scale(1.3)' : 'none',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="card">

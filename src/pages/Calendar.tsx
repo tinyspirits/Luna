@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays, isSameMonth, isWithinInterval } from 'date-fns';
 import { getLatestCycle } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
 
 const CalendarPage = () => {
-  const { viewingUid, usePartnerData } = useAuth();
+  const { viewingUid, usePartnerData, profile } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [cycle, setCycle] = useState<Cycle | null>(null);
 
@@ -20,8 +20,8 @@ const CalendarPage = () => {
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
-  const startDate = monthStart; // For a real calendar, you'd pad the start day to match the week start
-  const endDate = monthEnd; // Similarly, pad the end day
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
 
   const dateFormat = "MMMM yyyy";
   const days = eachDayOfInterval({
@@ -31,18 +31,6 @@ const CalendarPage = () => {
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-
-  const getDayStatus = (day: Date) => {
-    if (!cycle) return null;
-    
-    // Simplistic logic for demo:
-    // Red if same day as start date
-    if (isSameDay(day, cycle.startDate)) return 'period-start';
-    if (isSameDay(day, cycle.expectedNextPeriod)) return 'period-next';
-    if (isSameDay(day, cycle.expectedOvulation)) return 'ovulation';
-    
-    return null;
-  };
 
   return (
     <div className="animate-fade-in">
@@ -60,40 +48,23 @@ const CalendarPage = () => {
             <div key={d} style={{ fontWeight: 'bold', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{d}</div>
           ))}
           
-          {/* Pad empty days for first week (simplistic) */}
-          {Array.from({ length: startDate.getDay() }).map((_, i) => (
-            <div key={`empty-${i}`} />
-          ))}
-
           {days.map(day => {
-            const status = getDayStatus(day);
-            let bgColor = 'transparent';
-            let color = 'var(--text-main)';
-            
-            if (status === 'period-start') {
-              bgColor = 'var(--primary)';
-              color = 'white';
-            } else if (status === 'period-next') {
-              bgColor = 'var(--primary-light)';
-              color = 'white';
-            } else if (status === 'ovulation') {
-              bgColor = 'var(--secondary)';
-              color = 'var(--text-main)';
+            let isBleeding = false;
+            let isOvulation = false;
+
+            if (cycle) {
+              isBleeding = isWithinInterval(day, { start: cycle.expectedNextPeriod, end: addDays(cycle.expectedNextPeriod, 4) });
+              isOvulation = isSameDay(day, cycle.expectedOvulation);
             }
 
             return (
               <div 
                 key={day.toString()} 
-                style={{ 
-                  padding: '10px 0', 
-                  borderRadius: '50%', 
-                  background: bgColor,
-                  color: color,
-                  fontWeight: isSameDay(day, new Date()) ? 'bold' : 'normal',
-                  border: isSameDay(day, new Date()) ? '2px solid var(--text-main)' : 'none'
-                }}
+                className={`calendar-cell ${!isSameMonth(day, monthStart) ? 'disabled' : ''} ${isSameDay(day, new Date()) ? 'today' : ''} ${isBleeding ? 'period' : ''} ${isOvulation ? 'ovulation' : ''}`}
+                style={{ position: 'relative', padding: '10px 0' }}
               >
                 {format(day, 'd')}
+                {isBleeding && <span style={{ position: 'absolute', bottom: '2px', right: '2px', fontSize: '0.7rem' }}>{profile?.periodIcon || '🩸'}</span>}
               </div>
             );
           })}

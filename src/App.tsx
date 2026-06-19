@@ -6,7 +6,24 @@ import Log from './pages/Log';
 import CalendarPage from './pages/Calendar';
 import Auth from './pages/Auth';
 import Settings from './pages/Settings';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useAuth, AuthProvider } from './contexts/AuthContext';
+import { useEffect } from 'react';
+
+// Wrapper để quản lý Background theo cá nhân hóa
+const ThemeWrapper = ({ children }: { children: ReactElement }) => {
+  const { profile } = useAuth();
+  useEffect(() => {
+    if (profile?.themeBackground) {
+      document.body.style.background = profile.themeBackground;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      document.body.style.backgroundAttachment = 'fixed';
+    } else {
+      document.body.style.background = 'var(--background)';
+    }
+  }, [profile?.themeBackground]);
+  return <>{children}</>;
+};
 
 const Navigation = () => {
   const location = useLocation();
@@ -58,21 +75,22 @@ const PublicRoute = ({ children }: { children: ReactElement }) => {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <div className="app-container">
-          <div className="content-area">
-            <Routes>
-              <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-              
-              <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-              <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
-              <Route path="/log" element={<PrivateRoute><Log /></PrivateRoute>} />
-              <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-            </Routes>
+      <ThemeWrapper>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <div className="app-container">
+            <div className="content-area">
+              <Routes>
+                <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+                <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+                <Route path="/log" element={<PrivateRoute><Log /></PrivateRoute>} />
+                <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
+                <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+              </Routes>
+            </div>
+            <Navigation />
           </div>
-          <Navigation />
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ThemeWrapper>
     </AuthProvider>
   );
 }
