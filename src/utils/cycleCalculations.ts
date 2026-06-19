@@ -126,6 +126,13 @@ export const getGlobalCycleDay = (currentDate: Date, cycles: Cycle[]): number =>
   return differenceInDays(currentDate, latestStart) + 1;
 };
 
+export const isDatePredicted = (currentDate: Date, cycles: Cycle[]): boolean => {
+  if (cycles.length === 0) return false;
+  const future = predictFutureCycles(cycles, 1);
+  if (future.length === 0) return false;
+  return currentDate >= future[0].start;
+};
+
 export type PregnancyChance = 'Trứng rụng' | 'Cao' | 'Thấp' | 'An toàn' | 'Đang Hành Kinh' | 'Dự đoán hành kinh' | 'Chưa rõ';
 
 export const predictFutureCycles = (cycles: Cycle[], count: number = 6) => {

@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
-import { getCycleDay, getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
+import { getCycleDay, getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions, isDatePredicted } from '../utils/cycleCalculations';
 import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
 import CycleCalendarModal from '../components/CycleCalendarModal';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const WEEKDAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
@@ -259,6 +259,7 @@ const Home = () => {
 
   const selectedChance = (cycle && allCycles.length > 0) ? getGlobalPregnancyChance(selectedDate, allCycles) : 'Chưa rõ';
   const isSelectedToday = isSameDay(selectedDate, today);
+  const isPredicted = (cycle && allCycles.length > 0) ? isDatePredicted(selectedDate, allCycles) : false;
 
   // If male and not connected to a partner, show empty state immediately
   if (isMale && !profile?.partnerUid) {
@@ -427,21 +428,30 @@ const Home = () => {
           width: '250px',
           height: '250px',
           borderRadius: '50%',
-          background: cycle ? 'var(--surface)' : 'var(--border)',
-          border: `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : (selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh') ? '#e84393' : 'var(--primary-light)'}`,
+          background: isPredicted ? 'transparent' : (cycle ? 'var(--surface)' : 'var(--border)'),
+          border: isPredicted ? 'none' : `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : (selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh') ? '#e84393' : 'var(--primary-light)'}`,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: selectedChance === 'Trứng rụng' 
+          boxShadow: isPredicted ? 'none' : (selectedChance === 'Trứng rụng' 
             ? '0 0 30px rgba(253, 203, 110, 0.3)' 
-            : 'var(--shadow-md)',
+            : 'var(--shadow-md)'),
           transform: `translateX(${circleSlide.offset}px)`,
           opacity: circleSlide.opacity,
-          transition: `${circleSlide.transition}, box-shadow 0.4s ease, border-color 0.4s ease`,
+          transition: `${circleSlide.transition}, box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease`,
           willChange: 'transform, opacity'
         }}>
-          {cycle ? (
+          {isPredicted ? (
+            <>
+              <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1rem', marginBottom: '8px' }}>
+                Dự đoán:
+              </span>
+              <h2 style={{ fontSize: '2.8rem', margin: '0', color: 'var(--text-main)', lineHeight: 1.1, fontWeight: 800, textAlign: 'center' }}>
+                {selectedChance === 'Dự đoán hành kinh' ? `Ngày có kinh ${cycleDay}` : selectedChance === 'Trứng rụng' ? 'Ngày rụng trứng' : `Ngày thứ ${cycleDay}`}
+              </h2>
+            </>
+          ) : cycle ? (
             <>
               {/* Main info: ovulation countdown or cycle day */}
               {daysUntilOvulation !== null && daysUntilOvulation > 0 && selectedChance !== 'Đang Hành Kinh' && selectedChance !== 'Dự đoán hành kinh' ? (
@@ -557,6 +567,77 @@ const Home = () => {
           </span>
         </div>
       )}
+
+      {/* Chu kỳ của tôi (My Cycle Stats) */}
+      {allCycles.length >= 2 && (() => {
+        const sortedDesc = [...allCycles].sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+        const prevCycle = sortedDesc[1];
+        const currentCycle = sortedDesc[0];
+        
+        const prevCycleLength = differenceInDays(currentCycle.startDate, prevCycle.startDate);
+        const prevPeriodLength = prevCycle.endDate ? (differenceInDays(prevCycle.endDate, prevCycle.startDate) + 1) : 5;
+        
+        const lengths: number[] = [];
+        for (let i = 0; i < sortedDesc.length - 1; i++) {
+          lengths.push(differenceInDays(sortedDesc[i].startDate, sortedDesc[i+1].startDate));
+        }
+        const validLengths = lengths.filter(l => l > 15 && l < 60);
+        const minLen = validLengths.length > 0 ? Math.min(...validLengths) : prevCycleLength;
+        const maxLen = validLengths.length > 0 ? Math.max(...validLengths) : prevCycleLength;
+
+        const isCycleNormal = prevCycleLength >= 21 && prevCycleLength <= 35;
+        const isPeriodNormal = prevPeriodLength >= 2 && prevPeriodLength <= 7;
+        const isRegular = maxLen - minLen <= 7;
+
+        return (
+          <div style={{ marginBottom: '24px' }}>
+            <h2 style={{ marginBottom: '16px' }}>Chu kỳ của tôi</h2>
+            <div style={{
+              background: 'var(--surface)',
+              borderRadius: '16px',
+              padding: '0 16px',
+              boxShadow: 'var(--shadow-sm)',
+              border: '1px solid var(--border)'
+            }}>
+              {/* Row 1 */}
+              <div style={{ padding: '16px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Độ dài chu kỳ trước</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{prevCycleLength} ngày</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: isCycleNormal ? '#27ae60' : '#e67e22', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  {isCycleNormal ? <CheckCircle2 size={16} color="#27ae60" fill="#e8f8f5" /> : <AlertCircle size={16} color="#e67e22" fill="#fef5e7" />}
+                  {isCycleNormal ? 'BÌNH THƯỜNG' : 'BẤT THƯỜNG'}
+                </div>
+              </div>
+              
+              {/* Row 2 */}
+              <div style={{ padding: '16px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Độ dài kỳ kinh trước</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{prevPeriodLength} ngày</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: isPeriodNormal ? '#27ae60' : '#e67e22', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  {isPeriodNormal ? <CheckCircle2 size={16} color="#27ae60" fill="#e8f8f5" /> : <AlertCircle size={16} color="#e67e22" fill="#fef5e7" />}
+                  {isPeriodNormal ? 'BÌNH THƯỜNG' : 'BẤT THƯỜNG'}
+                </div>
+              </div>
+              
+              {/* Row 3 */}
+              <div style={{ padding: '16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Thay đổi về độ dài chu kỳ</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{minLen === maxLen ? `${minLen} ngày` : `${minLen}-${maxLen} ngày`}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: isRegular ? '#27ae60' : '#e67e22', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  {isRegular ? <CheckCircle2 size={16} color="#27ae60" fill="#e8f8f5" /> : <AlertCircle size={16} color="#e67e22" fill="#fef5e7" />}
+                  {isRegular ? 'ĐỀU' : 'KHÔNG ĐỀU'}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Xu hướng chu kỳ - Cycle Trend Chart */}
       {allCycles.length >= 2 && (() => {
