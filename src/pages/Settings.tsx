@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { linkPartner, updateUserProfile } from '../services/firestore';
+import { linkPartner, updateUserProfile, uploadBackgroundImage } from '../services/firestore';
+import { UploadCloud } from 'lucide-react';
 
 const PRESET_BGS = [
   { name: 'Mặc định', value: '' },
@@ -17,8 +18,8 @@ const Settings = () => {
   const { currentUser, profile, reloadProfile } = useAuth();
   const [partnerCode, setPartnerCode] = useState('');
   const [linking, setLinking] = useState(false);
-  const [customBg, setCustomBg] = useState('');
   const [savingTheme, setSavingTheme] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -51,6 +52,26 @@ const Settings = () => {
       alert('Lỗi khi lưu giao diện!');
     }
     setSavingTheme(false);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+    
+    // Kiểm tra dung lượng file (giới hạn 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Vui lòng chọn ảnh có kích thước dưới 5MB.');
+      return;
+    }
+
+    setUploadingImage(true);
+    const url = await uploadBackgroundImage(currentUser.uid, file);
+    if (url) {
+      await reloadProfile();
+    } else {
+      alert('Lỗi khi tải ảnh lên. Hãy kiểm tra lại Firebase Storage Rules.');
+    }
+    setUploadingImage(false);
   };
 
   return (
@@ -113,21 +134,31 @@ const Settings = () => {
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
             <input 
-              type="text" 
-              placeholder="Hoặc dán URL hình ảnh (http...)"
-              value={customBg}
-              onChange={e => setCustomBg(e.target.value)}
-              style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
+              type="file" 
+              id="bg-upload"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+              disabled={uploadingImage || savingTheme}
             />
-            <button 
-              className="btn-secondary" 
-              onClick={() => handleUpdateTheme(`url(${customBg})`, profile?.periodIcon || '🩸')}
-              disabled={!customBg || savingTheme}
+            <label 
+              htmlFor="bg-upload"
+              className="btn-secondary"
+              style={{ 
+                flex: 1, 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                gap: '8px', 
+                cursor: uploadingImage || savingTheme ? 'not-allowed' : 'pointer',
+                opacity: uploadingImage || savingTheme ? 0.7 : 1
+              }}
             >
-              Áp dụng
-            </button>
+              <UploadCloud size={20} />
+              {uploadingImage ? 'Đang tải lên...' : 'Tải ảnh nền từ máy lên'}
+            </label>
           </div>
         </div>
 
