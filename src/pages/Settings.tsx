@@ -33,11 +33,11 @@ const Settings = () => {
   return (
     <div className="animate-fade-in">
       <h1>Cài đặt</h1>
-      
+
       <div className="card">
         <h2>Tài khoản của bạn</h2>
         <p style={{ marginBottom: '16px' }}><strong>Email:</strong> {currentUser?.email}</p>
-        
+
         <button className="btn-secondary" onClick={handleLogout} style={{ width: '100%', color: '#d63031', borderColor: '#d63031' }}>
           Đăng xuất
         </button>
@@ -54,8 +54,8 @@ const Settings = () => {
           <p style={{ color: 'var(--secondary)', fontWeight: 600 }}>✅ Đã kết nối với bạn đời ({profile.partnerUid.substring(0, 8)}...)</p>
         ) : (
           <div style={{ display: 'flex', gap: '8px' }}>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Nhập mã của bạn đời..."
               value={partnerCode}
               onChange={(e) => setPartnerCode(e.target.value)}
@@ -71,7 +71,7 @@ const Settings = () => {
       <div className="card">
         <h2>Thông tin ứng dụng</h2>
         <p>Phiên bản: 1.0.0</p>
-        <p>Bản quyền thuộc về Bloom App.</p>
+        <p>Bản quyền thuộc về Luna App.</p>
       </div>
     </div>
   );

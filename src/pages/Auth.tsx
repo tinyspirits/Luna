@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,7 +24,18 @@ const Auth = () => {
       }
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+      setError('Lỗi kết nối. Vui lòng thử lại sau.');
+    }
+    setLoading(false);
+  };
+
+  const handleAnonymousLogin = async () => {
+    try {
+      setLoading(true);
+      await signInAnonymously(auth);
+    } catch (err: any) {
+      console.error(err);
+      setError('Không thể đăng nhập ẩn danh lúc này. Vui lòng kiểm tra Firebase Console.');
     } finally {
       setLoading(false);
     }
@@ -33,7 +44,7 @@ const Auth = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '80vh' }}>
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '8px' }}>Bloom</h1>
+        <h1 style={{ fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '8px' }}>Luna</h1>
         <p>Theo dõi sức khỏe & Chu kỳ của bạn</p>
       </div>
 
@@ -67,13 +78,33 @@ const Auth = () => {
             />
           </div>
 
-          <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '10px' }}>
-            {loading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
-          </button>
-        </form>
+          <button 
+          className="btn-primary" 
+          type="submit" 
+          disabled={loading}
+          style={{ width: '100%', padding: '14px', fontSize: '1.1rem', marginBottom: '16px' }}
+        >
+          {loading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
+        </button>
+
+        <div style={{ position: 'relative', textAlign: 'center', marginBottom: '16px' }}>
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
+          <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', padding: '0 10px', fontSize: '0.8rem', color: '#666' }}>HOẶC</span>
+        </div>
+
+        <button 
+          type="button"
+          onClick={handleAnonymousLogin}
+          disabled={loading}
+          style={{ width: '100%', padding: '14px', fontSize: '1.1rem', background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+        >
+          Dùng thử không cần tài khoản
+        </button>
+      </form>
 
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
           <button 
+            type="button"
             className="btn-secondary" 
             style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)' }}
             onClick={() => setIsLogin(!isLogin)}
