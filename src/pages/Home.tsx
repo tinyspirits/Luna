@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
-import { getCycleDay, getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions, isDatePredicted, getNextEvents } from '../utils/cycleCalculations';
+import { getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions, isDatePredicted, getNextEvents } from '../utils/cycleCalculations';
 import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
@@ -224,7 +224,7 @@ const Home = () => {
   const today = new Date();
   const cycleDay = (cycle && allCycles.length > 0) ? getGlobalCycleDay(selectedDate, allCycles) : 0;
   const smartPred = allCycles.length > 0 ? calculateSmartPredictions(allCycles) : null;
-  const { nextPeriodDate, nextOvulationDate, daysUntilNextPeriod, daysUntilNextOvulation } = getNextEvents(selectedDate, allCycles);
+  const { nextOvulationDate, daysUntilNextPeriod, daysUntilNextOvulation } = getNextEvents(selectedDate, allCycles);
 
   const isMale = profile?.gender === 'male';
 
