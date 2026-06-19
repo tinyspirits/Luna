@@ -388,8 +388,7 @@ const Home = () => {
                 className={`day-strip-item ${isActive ? 'active' : ''} ${isDayToday ? 'today' : ''}`}
                 onClick={() => setSelectedDate(day)}
               >
-                <span className="day-num">{format(day, 'd')}</span>
-                {cycle && markerClass && <div className={`day-marker ${markerClass}`} />}
+                <span className={`day-num ${markerClass || ''}`}>{format(day, 'd')}</span>
               </div>
             );
           })}

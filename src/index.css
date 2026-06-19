@@ -332,36 +332,30 @@ p { color: var(--text-muted); font-size: 0.95rem; }
   border: 2px solid white;
 }
 
-.day-strip-item .day-marker {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-top: 3px;
-  opacity: 0.9;
+.day-strip-item .day-num.period {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
 }
 
-.day-strip-item .day-marker.period {
-  background: #e84393;
-  box-shadow: 0 0 4px rgba(232, 67, 147, 0.5);
-}
-
-.day-strip-item .day-marker.ovulation {
+.day-strip-item .day-num.ovulation {
   background: var(--secondary);
-  box-shadow: 0 0 6px var(--secondary);
+  color: var(--text-main);
+  box-shadow: 0 0 10px var(--secondary);
+  font-weight: bold;
 }
 
-.day-strip-item .day-marker.fertile {
-  background: #f8a5c2;
+.day-strip-item .day-num.fertile {
+  background: rgba(248, 165, 194, 0.3);
+  border: 1px dashed var(--secondary);
 }
 
-.day-strip-item .day-marker.low {
-  background: #3498db;
-  opacity: 0.5;
+.day-strip-item .day-num.low {
+  background: rgba(52, 152, 219, 0.15);
 }
 
-.day-strip-item .day-marker.safe {
-  background: #2ecc71;
-  opacity: 0.4;
+.day-strip-item .day-num.safe {
+  background: rgba(46, 204, 113, 0.15);
 }
 
 /* Day strip navigation arrows */
