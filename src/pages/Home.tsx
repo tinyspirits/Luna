@@ -455,14 +455,42 @@ const Home = () => {
               <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1rem', marginBottom: '8px' }}>
                 Dự đoán:
               </span>
-              <h2 style={{ fontSize: '2.8rem', margin: '0', color: 'var(--text-main)', lineHeight: 1.1, fontWeight: 800, textAlign: 'center' }}>
-                {selectedChance === 'Dự đoán hành kinh' ? `Ngày có kinh ${cycleDay}` : selectedChance === 'Trứng rụng' ? 'Ngày rụng trứng' : `Ngày thứ ${cycleDay}`}
+              <h2 style={{ fontSize: '2.5rem', margin: '0', color: 'var(--text-main)', lineHeight: 1.1, fontWeight: 800, textAlign: 'center' }}>
+                {selectedChance === 'Dự đoán hành kinh' 
+                  ? `Ngày có kinh ${cycleDay}` 
+                  : selectedChance === 'Trứng rụng' 
+                  ? 'Ngày rụng trứng' 
+                  : daysUntilNextOvulation !== null && daysUntilNextPeriod !== null && daysUntilNextOvulation < daysUntilNextPeriod
+                  ? `Rụng trứng sau ${daysUntilNextOvulation} ngày`
+                  : daysUntilNextPeriod !== null && daysUntilNextOvulation !== null && daysUntilNextPeriod < daysUntilNextOvulation
+                  ? `Hành kinh sau ${daysUntilNextPeriod} ngày`
+                  : `Ngày thứ ${cycleDay}`}
               </h2>
             </>
           ) : cycle ? (
             <>
-              {/* Main info: ovulation countdown or cycle day */}
-              {daysUntilNextOvulation !== null && daysUntilNextOvulation > 0 && selectedChance !== 'Đang Hành Kinh' && selectedChance !== 'Dự đoán hành kinh' ? (
+              {selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh' ? (
+                <>
+                  <h2 style={{ fontSize: '3.5rem', margin: 0, color: 'var(--primary)', lineHeight: 1 }}>
+                    {cycleDay > 0 ? cycleDay : 1}
+                  </h2>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, marginTop: '8px' }}>
+                    Ngày của chu kỳ
+                  </span>
+                </>
+              ) : selectedChance === 'Trứng rụng' ? (
+                <>
+                  <span style={{ color: 'var(--secondary)', fontWeight: 700, fontSize: '0.9rem' }}>
+                    🥚 Hôm nay
+                  </span>
+                  <h2 style={{ fontSize: '2rem', margin: '8px 0', color: 'var(--secondary)', lineHeight: 1.2, fontWeight: 800 }}>
+                    Rụng trứng
+                  </h2>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.8rem' }}>
+                    Đỉnh điểm thụ thai
+                  </span>
+                </>
+              ) : daysUntilNextOvulation !== null && daysUntilNextPeriod !== null && daysUntilNextOvulation < daysUntilNextPeriod ? (
                 <>
                   <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
                     Rụng trứng sau
@@ -474,16 +502,16 @@ const Home = () => {
                     ngày
                   </span>
                 </>
-              ) : daysUntilNextOvulation !== null && daysUntilNextOvulation <= 0 && selectedChance === 'Trứng rụng' ? (
+              ) : daysUntilNextPeriod !== null && daysUntilNextOvulation !== null && daysUntilNextPeriod < daysUntilNextOvulation ? (
                 <>
-                  <span style={{ color: 'var(--secondary)', fontWeight: 700, fontSize: '0.9rem' }}>
-                    🥚 Hôm nay
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
+                    Hành kinh sau
                   </span>
-                  <h2 style={{ fontSize: '2rem', margin: '8px 0', color: 'var(--secondary)', lineHeight: 1.2, fontWeight: 800 }}>
-                    Rụng trứng
+                  <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1, fontWeight: 800 }}>
+                    {daysUntilNextPeriod}
                   </h2>
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.8rem' }}>
-                    Đỉnh điểm thụ thai
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem' }}>
+                    ngày nữa
                   </span>
                 </>
               ) : (
