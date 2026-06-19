@@ -40,11 +40,13 @@ const Home = () => {
     setLoading(false);
   };
 
-  const handleAddHistory = async (startDate: Date, endDate: Date) => {
+  const handleAddHistory = async (cycles: { startDate: Date; endDate: Date }[]) => {
     if (!currentUser) return;
     setLoading(true);
     setShowHistoryModal(false);
-    await addHistoricalCycle(currentUser.uid, startDate, endDate, { averageCycleLength: 28, averagePeriodLength: 5 });
+    for (const c of cycles) {
+      await addHistoricalCycle(currentUser.uid, c.startDate, c.endDate, { averageCycleLength: 28, averagePeriodLength: 5 });
+    }
     const [data, history] = await Promise.all([
       getLatestCycle(currentUser.uid),
       getAllCycles(currentUser.uid)
