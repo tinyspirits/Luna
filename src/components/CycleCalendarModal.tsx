@@ -44,11 +44,9 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
   const getExistingStatus = (day: Date): 'period' | 'start' | 'predicted-period' | 'predicted-ovulation' | null => {
     for (const c of existingCycles) {
       if (isSameDay(day, c.startDate)) return 'start';
-      if (c.endDate && isWithinInterval(day, { start: c.startDate, end: c.endDate })) return 'period';
-      if (!c.endDate) {
-        const periodEnd = addDays(c.startDate, 4);
-        if (isWithinInterval(day, { start: c.startDate, end: periodEnd })) return 'period';
-      }
+      // Chỉ bôi đỏ tối đa 5 ngày hành kinh để tránh lỗi data cũ
+      const periodEnd = addDays(c.startDate, 4);
+      if (isWithinInterval(day, { start: c.startDate, end: periodEnd })) return 'period';
     }
     for (const f of futurePredictions) {
       if (isSameDay(day, f.ovulation)) return 'predicted-ovulation';
