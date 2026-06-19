@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { getLatestCycle, startNewCycle, addHistoricalCycle } from '../services/firestore';
+import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
-import { getCycleDay, getPregnancyChance } from '../utils/cycleCalculations';
+import { getCycleDay, getPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
 import { useAuth } from '../contexts/AuthContext';
 
 const Home = () => {
   const { currentUser, profile, viewingUid, usePartnerData, setUsePartnerData } = useAuth();
   const [cycle, setCycle] = useState<Cycle | null>(null);
+  const [allCycles, setAllCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHistoryForm, setShowHistoryForm] = useState(false);
   const [histStart, setHistStart] = useState('');
@@ -16,8 +17,12 @@ const Home = () => {
     const fetchCycle = async () => {
       if (!viewingUid) return;
       setLoading(true);
-      const data = await getLatestCycle(viewingUid);
+      const [data, history] = await Promise.all([
+        getLatestCycle(viewingUid),
+        getAllCycles(viewingUid)
+      ]);
       setCycle(data);
+      setAllCycles(history);
       setLoading(false);
     };
     fetchCycle();
@@ -27,8 +32,12 @@ const Home = () => {
     if (!currentUser) return;
     setLoading(true);
     await startNewCycle(currentUser.uid, new Date(), { averageCycleLength: 28, averagePeriodLength: 5 });
-    const data = await getLatestCycle(currentUser.uid);
+    const [data, history] = await Promise.all([
+      getLatestCycle(currentUser.uid),
+      getAllCycles(currentUser.uid)
+    ]);
     setCycle(data);
+    setAllCycles(history);
     setLoading(false);
   };
 
@@ -37,8 +46,12 @@ const Home = () => {
     if (!currentUser || !histStart || !histEnd) return;
     setLoading(true);
     await addHistoricalCycle(currentUser.uid, new Date(histStart), new Date(histEnd), { averageCycleLength: 28, averagePeriodLength: 5 });
-    const data = await getLatestCycle(currentUser.uid);
+    const [data, history] = await Promise.all([
+      getLatestCycle(currentUser.uid),
+      getAllCycles(currentUser.uid)
+    ]);
     setCycle(data);
+    setAllCycles(history);
     setShowHistoryForm(false);
     setLoading(false);
     alert('Đã thêm chu kỳ cũ thành công!');
@@ -49,6 +62,8 @@ const Home = () => {
   }
 
   const cycleDay = cycle ? getCycleDay(cycle.startDate, new Date()) : 0;
+  const smartPred = allCycles.length > 0 ? calculateSmartPredictions(allCycles) : null;
+  const daysUntilPeriod = smartPred?.daysUntilNextPeriod ?? (cycle ? Math.max(0, 28 - cycleDay) : null);
 
   return (
     <div className="animate-fade-in">
@@ -107,6 +122,26 @@ const Home = () => {
           )}
         </div>
       </div>
+
+      {/* Countdown banner */}
+      {cycle && daysUntilPeriod !== null && (
+        <div style={{
+          background: daysUntilPeriod <= 3 ? 'linear-gradient(135deg, var(--primary), var(--primary-light))' : 'var(--surface)',
+          borderRadius: '12px',
+          padding: '14px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--border)'
+        }}>
+          <span style={{ fontSize: '0.9rem', color: daysUntilPeriod <= 3 ? '#fff' : 'var(--text-muted)' }}>Kỳ kinh tiếp theo</span>
+          <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: daysUntilPeriod <= 3 ? '#fff' : 'var(--primary)' }}>
+            {daysUntilPeriod <= 0 ? 'Đã đến hạn!' : `Còn ${daysUntilPeriod} ngày`}
+          </span>
+        </div>
+      )}
 
       <div className="card">
         <h2>Thao tác nhanh</h2>

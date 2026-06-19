@@ -1,11 +1,12 @@
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import type { ReactElement } from 'react';
-import { Home as HomeIcon, PlusCircle, Calendar as CalendarIcon, Settings as SettingsIcon } from 'lucide-react';
+import { Home as HomeIcon, PlusCircle, Calendar as CalendarIcon, Settings as SettingsIcon, BarChart2 } from 'lucide-react';
 import Home from './pages/Home';
 import Log from './pages/Log';
 import CalendarPage from './pages/Calendar';
 import Auth from './pages/Auth';
 import Settings from './pages/Settings';
+import Insights from './pages/Insights';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
 import { useEffect } from 'react';
 
@@ -60,6 +61,10 @@ const Navigation = () => {
         <PlusCircle size={28} className="text-primary" />
         <span>Ghi chép</span>
       </Link>
+      <Link to="/insights" className={`nav-item ${location.pathname === '/insights' ? 'active' : ''}`}>
+        <BarChart2 size={24} />
+        <span>Phân tích</span>
+      </Link>
       <Link to="/settings" className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}>
         <SettingsIcon size={24} />
         <span>Cài đặt</span>
@@ -98,6 +103,7 @@ function App() {
                 <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
                 <Route path="/log" element={<PrivateRoute><Log /></PrivateRoute>} />
                 <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
+                <Route path="/insights" element={<PrivateRoute><Insights /></PrivateRoute>} />
                 <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
               </Routes>
             </div>

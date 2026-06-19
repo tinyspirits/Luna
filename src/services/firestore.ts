@@ -104,6 +104,27 @@ export const getLatestCycle = async (userId: string): Promise<Cycle | null> => {
   }
 };
 
+export const getAllCycles = async (userId: string): Promise<Cycle[]> => {
+  try {
+    const cyclesRef = collection(db, 'users', userId, 'cycles');
+    const q = query(cyclesRef, orderBy('startDate', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        startDate: toDate(data.startDate)!,
+        endDate: toDate(data.endDate),
+        expectedNextPeriod: toDate(data.expectedNextPeriod)!,
+        expectedOvulation: toDate(data.expectedOvulation)!,
+      };
+    });
+  } catch (error) {
+    console.error("Error getting all cycles:", error);
+    return [];
+  }
+};
+
 export const startNewCycle = async (userId: string, startDate: Date, userSettings: UserSettings) => {
   try {
     const predictions = calculatePredictions(startDate, userSettings);
