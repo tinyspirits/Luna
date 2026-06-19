@@ -149,9 +149,15 @@ const Home = () => {
         ) : (
           <>
             {!cycle ? (
-              <button className="btn-primary" onClick={handleStartPeriod}>
-                Bắt đầu chu kỳ hôm nay
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center' }}>Bạn chưa có dữ liệu chu kỳ nào. Hãy bắt đầu!</p>
+                <button className="btn-primary" onClick={handleStartPeriod}>
+                  Bắt đầu chu kỳ hôm nay
+                </button>
+                <button className="btn-secondary" style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)' }} onClick={() => setShowHistoryModal(true)}>
+                  📅 Nhập chu kỳ cũ (Lịch sử)
+                </button>
+              </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <p><strong>Kỳ kinh tiếp theo:</strong> {cycle.expectedNextPeriod.toLocaleDateString()}</p>
@@ -159,12 +165,11 @@ const Home = () => {
                 <button className="btn-secondary" style={{ width: '100%', marginTop: '10px' }} onClick={handleStartPeriod}>
                   Bắt đầu chu kỳ mới
                 </button>
+                <button className="btn-secondary" style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)' }} onClick={() => setShowHistoryModal(true)}>
+                  📅 Nhập chu kỳ cũ (Lịch sử)
+                </button>
               </div>
             )}
-            
-            <button className="btn-secondary" style={{ width: '100%', marginTop: '10px', background: 'transparent', border: '1px solid var(--border)' }} onClick={() => setShowHistoryModal(true)}>
-              📅 Nhập chu kỳ cũ (Lịch sử)
-            </button>
           </>
         )}
       </div>

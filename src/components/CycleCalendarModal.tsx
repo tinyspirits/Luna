@@ -50,8 +50,8 @@ const CycleCalendarModal = ({ onSave, onClose }: Props) => {
         width: '100%', maxWidth: '480px',
         background: 'var(--background)',
         borderRadius: '24px 24px 0 0',
-        padding: '24px',
-        maxHeight: '90vh',
+        padding: '24px 24px 100px 24px', /* padding-bottom đủ để tránh thanh nav */
+        maxHeight: '92vh',
         overflowY: 'auto',
       }}>
         {/* Header */}
