@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { getAllCycles } from '../services/firestore';
+import { getAllCycles, deleteCycle } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { calculateSmartPredictions } from '../utils/cycleCalculations';
 import { differenceInDays, format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
-import { BarChart2, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { BarChart2, TrendingUp, AlertTriangle, CheckCircle, Clock, Trash2 } from 'lucide-react';
 
 const Insights = () => {
   const { viewingUid } = useAuth();
@@ -21,6 +21,18 @@ const Insights = () => {
     };
     fetch();
   }, [viewingUid]);
+
+  const handleDeleteCycle = async (cycleId: string) => {
+    if (!viewingUid) return;
+    if (window.confirm('Bạn có chắc chắn muốn xóa chu kỳ này không?')) {
+      const success = await deleteCycle(viewingUid, cycleId);
+      if (success) {
+        setCycles(cycles.filter(c => c.id !== cycleId));
+      } else {
+        alert('Có lỗi xảy ra khi xóa!');
+      }
+    }
+  };
 
   if (loading) {
     return <div className="animate-fade-in"><p>Đang phân tích dữ liệu...</p></div>;
@@ -45,12 +57,13 @@ const Insights = () => {
   const sorted = [...cycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
   // Tính độ dài thực tế từng chu kỳ theo kiểu Flo
-  const cycleHistory: { startLabel: string; endLabel: string; length: number }[] = [];
+  const cycleHistory: { id?: string; startLabel: string; endLabel: string; length: number }[] = [];
 
   // Chu kỳ hiện tại (kỳ kinh gần nhất)
   const latestCycle = sorted[sorted.length - 1];
   const currentLen = differenceInDays(new Date(), latestCycle.startDate);
   cycleHistory.push({
+    id: latestCycle.id,
     startLabel: format(latestCycle.startDate, "d 'thg' M"),
     endLabel: format(new Date(), "d 'thg' M"),
     length: currentLen > 0 ? currentLen : 1,
@@ -60,6 +73,7 @@ const Insights = () => {
     const len = differenceInDays(sorted[i].startDate, sorted[i - 1].startDate);
     if (len > 15 && len < 60) {
       cycleHistory.push({
+        id: sorted[i - 1].id,
         startLabel: format(sorted[i - 1].startDate, "d 'thg' M"),
         endLabel: format(sorted[i].startDate, "d 'thg' M"),
         length: len,
@@ -143,9 +157,16 @@ const Insights = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {cycleHistory.map((c, i) => (
             <div key={i}>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                {i === 0 && <span style={{ fontWeight: 'bold', color: 'var(--text-main)', fontSize: '0.75rem' }}>CHU KỲ HIỆN TẠI: </span>}
-                {c.startLabel} - {c.endLabel}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  {i === 0 && <span style={{ fontWeight: 'bold', color: 'var(--text-main)', fontSize: '0.75rem' }}>CHU KỲ HIỆN TẠI: </span>}
+                  {c.startLabel} - {c.endLabel}
+                </div>
+                {c.id && (
+                  <button onClick={() => handleDeleteCycle(c.id!)} style={{ color: 'var(--text-muted)', padding: '4px', cursor: 'pointer' }}>
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ flex: 1, height: '24px', borderRadius: '12px', background: 'var(--border)', position: 'relative', overflow: 'hidden' }}>

@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, limit, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { calculatePredictions } from '../utils/cycleCalculations';
 import type { UserSettings } from '../utils/cycleCalculations';
@@ -175,6 +175,17 @@ export const addHistoricalCycle = async (userId: string, startDate: Date, endDat
     return true;
   } catch (error) {
     console.error("Error adding historical cycle:", error);
+    return false;
+  }
+};
+
+export const deleteCycle = async (userId: string, cycleId: string) => {
+  try {
+    const cycleRef = doc(db, 'users', userId, 'cycles', cycleId);
+    await deleteDoc(cycleRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting cycle:", error);
     return false;
   }
 };
