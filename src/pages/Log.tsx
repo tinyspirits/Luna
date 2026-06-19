@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { saveDailyLog, getDailyLog } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import DatePicker from '../components/DatePicker';
 
 const symptomsList = [
   'Đau bụng', 'Chuột rút', 'Đau lưng', 'Đau đầu',
@@ -98,12 +99,7 @@ const Log = () => {
 
       <div className="card">
         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Ngày</label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}
-        />
+        <DatePicker value={date} onChange={setDate} />
       </div>
 
       <div className="card">
