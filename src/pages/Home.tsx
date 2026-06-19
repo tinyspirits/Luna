@@ -814,26 +814,7 @@ const Home = () => {
         );
       })()}
 
-      {/* Daily Insights - Flo style */}
-      {cycle && (
-        <div className="daily-insights">
-          <h3>Thông tin hàng ngày · {format(selectedDate, "d 'thg' M", { locale: vi })}</h3>
-          <div className="insight-cards">
-            <div className="insight-card pregnancy">
-              <h4>{isSelectedToday ? 'Cơ hội thụ thai hôm nay' : `Cơ hội thụ thai ${format(selectedDate, 'd/M')}`}</h4>
-              <p>{selectedChance === 'Trứng rụng' ? '🔥 Đỉnh điểm' : selectedChance === 'Cao' ? '⚠️ Cao' : selectedChance === 'Thấp' ? '📉 Thấp' : selectedChance === 'An toàn' ? '✅ An toàn' : '🩸 Hành kinh'}</p>
-            </div>
-            <div className="insight-card symptoms">
-              <h4>Triệu chứng có thể gặp</h4>
-              <p>{getSymptomHint(selectedChance)}</p>
-            </div>
-            <div className="insight-card tips">
-              <h4>Lời khuyên cho bạn</h4>
-              <p>{getDailyTip(selectedChance)}</p>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Quick Actions */}
       <div className="card">
