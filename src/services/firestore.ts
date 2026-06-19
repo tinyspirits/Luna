@@ -24,6 +24,7 @@ export interface UserProfile {
   partnerUid?: string;
   partnerName?: string;
   gender?: 'male' | 'female';
+  partnerGender?: 'male' | 'female';
   themeBackground?: string;
   periodIcon?: string;
 }
@@ -62,11 +63,19 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 export const linkPartner = async (userId: string, partnerUid: string, partnerName?: string) => {
   try {
     const userRef = doc(db, 'users', userId);
-    await setDoc(userRef, { partnerUid, partnerName: partnerName || 'Bạn đời' }, { merge: true });
+    const partnerRef = doc(db, 'users', partnerUid);
+    
+    // Fetch both profiles to get genders
+    const userSnap = await getDoc(userRef);
+    const partnerSnap = await getDoc(partnerRef);
+    
+    const userGender = userSnap.exists() ? userSnap.data().gender : undefined;
+    const partnerGender = partnerSnap.exists() ? partnerSnap.data().gender : undefined;
+
+    await setDoc(userRef, { partnerUid, partnerName: partnerName || 'Bạn đời', partnerGender: partnerGender || deleteField() }, { merge: true });
     
     // Two-way connection: link the partner back to this user
-    const partnerRef = doc(db, 'users', partnerUid);
-    await setDoc(partnerRef, { partnerUid: userId, partnerName: 'Bạn đời' }, { merge: true });
+    await setDoc(partnerRef, { partnerUid: userId, partnerName: 'Bạn đời', partnerGender: userGender || deleteField() }, { merge: true });
     
     return true;
   } catch (error) {
@@ -78,11 +87,11 @@ export const linkPartner = async (userId: string, partnerUid: string, partnerNam
 export const unlinkPartner = async (userId: string, partnerUid: string) => {
   try {
     const userRef = doc(db, 'users', userId);
-    await setDoc(userRef, { partnerUid: deleteField(), partnerName: deleteField() }, { merge: true });
+    await setDoc(userRef, { partnerUid: deleteField(), partnerName: deleteField(), partnerGender: deleteField() }, { merge: true });
     
     // Two-way connection: unlink the partner as well
     const partnerRef = doc(db, 'users', partnerUid);
-    await setDoc(partnerRef, { partnerUid: deleteField(), partnerName: deleteField() }, { merge: true });
+    await setDoc(partnerRef, { partnerUid: deleteField(), partnerName: deleteField(), partnerGender: deleteField() }, { merge: true });
     
     return true;
   } catch (error) {
