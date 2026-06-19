@@ -90,7 +90,7 @@ function App() {
   return (
     <AuthProvider>
       <ThemeWrapper>
-        <HashRouter basename={import.meta.env.BASE_URL}>
+        <HashRouter>
           <div className="app-container">
             <div className="content-area">
               <Routes>
