@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { getCycleDay, getPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format, addDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
 import CycleCalendarModal from '../components/CycleCalendarModal';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const WEEKDAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
 const Home = () => {
   const { currentUser, profile, viewingUid, usePartnerData, setUsePartnerData } = useAuth();
@@ -12,6 +16,8 @@ const Home = () => {
   const [allCycles, setAllCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [weekOffset, setWeekOffset] = useState(0);
 
   useEffect(() => {
     const fetchCycle = async () => {
@@ -27,6 +33,12 @@ const Home = () => {
     };
     fetchCycle();
   }, [viewingUid]);
+
+  // Reset selected date when switching partner view
+  useEffect(() => {
+    setSelectedDate(new Date());
+    setWeekOffset(0);
+  }, [usePartnerData]);
 
   const handleStartPeriod = async () => {
     if (!currentUser) return;
@@ -62,12 +74,44 @@ const Home = () => {
     return <div className="animate-fade-in"><p>Đang tải dữ liệu của bạn...</p></div>;
   }
 
-  const cycleDay = cycle ? getCycleDay(cycle.startDate, new Date()) : 0;
-  const daysUntilStart = cycle ? differenceInDays(cycle.startDate, new Date()) : 0;
+  const today = new Date();
+  const cycleDay = cycle ? getCycleDay(cycle.startDate, selectedDate) : 0;
+  const cycleDayToday = cycle ? getCycleDay(cycle.startDate, today) : 0;
   const smartPred = allCycles.length > 0 ? calculateSmartPredictions(allCycles) : null;
-  const daysUntilPeriod = smartPred?.daysUntilNextPeriod ?? (cycle ? Math.max(0, 28 - cycleDay) : null);
+  const daysUntilPeriod = smartPred?.daysUntilNextPeriod ?? (cycle ? Math.max(0, 28 - cycleDayToday) : null);
+
+  // Ovulation countdown
+  const daysUntilOvulation = cycle ? differenceInDays(cycle.expectedOvulation, selectedDate) : null;
+  const ovulationDate = cycle?.expectedOvulation;
 
   const isMale = profile?.gender === 'male';
+
+  // Build week days for the day strip
+  const baseDate = addDays(today, weekOffset * 7);
+  const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 }); // Start on Monday
+  const weekEnd = endOfWeek(baseDate, { weekStartsOn: 1 });
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Get pregnancy chance for a specific date
+  const getChanceForDate = (date: Date) => {
+    if (!cycle) return 'Chưa rõ';
+    return getPregnancyChance(date, cycle);
+  };
+
+  // Get marker class for day strip
+  const getMarkerClass = (chance: string) => {
+    switch (chance) {
+      case 'Đang Hành Kinh': return 'period';
+      case 'Trứng rụng': return 'ovulation';
+      case 'Cao': return 'fertile';
+      case 'Thấp': return 'low';
+      case 'An toàn': return 'safe';
+      default: return '';
+    }
+  };
+
+  const selectedChance = cycle ? getPregnancyChance(selectedDate, cycle) : 'Chưa rõ';
+  const isSelectedToday = isSameDay(selectedDate, today);
 
   // If male and not connected to a partner, show empty state immediately
   if (isMale && !profile?.partnerUid) {
@@ -84,66 +128,189 @@ const Home = () => {
     );
   }
 
+  // Check if partner tab should be shown:
+  // Only show when: user has partner AND user is NOT male AND partner is female
+  const showPartnerTab = !!(profile?.partnerUid && profile?.gender !== 'male' && profile?.partnerGender === 'female');
+
+  // Get daily insight text based on pregnancy chance
+  const getDailyTip = (chance: string) => {
+    switch (chance) {
+      case 'Trứng rụng':
+        return 'Hôm nay cơ thể ở trạng thái dễ thụ thai nhất. Nhiệt độ cơ thể tăng nhẹ, dịch nhầy trong và dai.';
+      case 'Cao':
+        return 'Đang trong cửa sổ thụ thai. Hormone estrogen tăng cao, tâm trạng thường tốt hơn.';
+      case 'Đang Hành Kinh':
+        return 'Cơ thể đang hành kinh. Nên uống nhiều nước ấm, nghỉ ngơi và bổ sung sắt.';
+      case 'Thấp':
+        return 'Giai đoạn tỉ lệ thụ thai thấp. Cơ thể đang chuẩn bị cho pha hoàng thể.';
+      case 'An toàn':
+        return 'Giai đoạn an toàn. Hormone ổn định, cơ thể ở trạng thái bình thường.';
+      default:
+        return 'Ghi chép chu kỳ để nhận phân tích chi tiết hơn nhé!';
+    }
+  };
+
+  const getSymptomHint = (chance: string) => {
+    switch (chance) {
+      case 'Trứng rụng':
+        return 'Có thể đau nhẹ bụng dưới (đau giữa chu kỳ), tăng ham muốn, da sáng đẹp hơn.';
+      case 'Cao':
+        return 'Có thể thấy dịch nhầy nhiều hơn, tâm trạng phấn chấn, năng lượng cao.';
+      case 'Đang Hành Kinh':
+        return 'Đau bụng kinh, mệt mỏi, đau lưng, thay đổi tâm trạng là bình thường.';
+      case 'Thấp':
+        return 'Có thể xuất hiện mụn, chướng bụng nhẹ, tâm trạng thay đổi.';
+      case 'An toàn':
+        return 'Cơ thể thường ở trạng thái ổn định nhất, ít triệu chứng bất thường.';
+      default:
+        return 'Theo dõi cơ thể và ghi chép để nhận phân tích chính xác hơn.';
+    }
+  };
+
   return (
     <>
     <div className="animate-fade-in">
-      {profile?.partnerUid && profile?.gender !== 'male' && profile?.partnerGender === 'female' && (
+      {/* Partner toggle tab - only show when partner is female */}
+      {showPartnerTab && (
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'var(--surface)', padding: '4px', borderRadius: '8px' }}>
           <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: !usePartnerData ? 'var(--primary)' : 'transparent', color: !usePartnerData ? 'white' : 'var(--text-main)', fontWeight: !usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(false)}>Của mình</button>
           <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: usePartnerData ? 'var(--secondary)' : 'transparent', color: usePartnerData ? 'var(--text-main)' : 'var(--text-main)', fontWeight: usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(true)}>Của {profile?.partnerName || 'bạn đời'}</button>
         </div>
       )}
 
+      {/* Day Strip Header - Month title + Calendar icon */}
+      <div className="day-strip-header">
+        <h2>{format(weekDays[3] || today, "d 'tháng' M", { locale: vi })}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button className="calendar-icon-btn" onClick={() => { setWeekOffset(w => w - 1); }} title="Tuần trước">
+            <ChevronLeft size={18} />
+          </button>
+          <button 
+            className="calendar-icon-btn" 
+            onClick={() => { setWeekOffset(0); setSelectedDate(new Date()); }} 
+            title="Hôm nay"
+            style={weekOffset === 0 ? { background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' } : {}}
+          >
+            <CalendarIcon size={16} />
+          </button>
+          <button className="calendar-icon-btn" onClick={() => { setWeekOffset(w => w + 1); }} title="Tuần sau">
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Weekday labels */}
+      <div className="day-strip-weekdays">
+        {WEEKDAY_LABELS.map((label, idx) => (
+          <span key={label} className={idx >= 5 ? 'weekend' : ''}>{label}</span>
+        ))}
+      </div>
+
+      {/* Day Strip - 7 days grid */}
+      <div className="day-strip">
+        {weekDays.map(day => {
+          const chance = getChanceForDate(day);
+          const markerClass = getMarkerClass(chance);
+          const isActive = isSameDay(day, selectedDate);
+          const isDayToday = isSameDay(day, today);
+
+          return (
+            <div
+              key={day.toISOString()}
+              className={`day-strip-item ${isActive ? 'active' : ''} ${isDayToday ? 'today' : ''}`}
+              onClick={() => setSelectedDate(day)}
+            >
+              <span className="day-num">{format(day, 'd')}</span>
+              {cycle && markerClass && <div className={`day-marker ${markerClass}`} />}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Main Heading */}
       <h1>{isMale && profile?.partnerUid ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : (usePartnerData ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : 'Chào buổi sáng 👋')}</h1>
       <p style={{ marginBottom: '24px' }}>Hôm nay cơ thể {isMale || usePartnerData ? (profile?.partnerName || 'người ấy') : 'bạn'} cảm thấy thế nào?</p>
 
+      {/* Main Circle with Ovulation Countdown */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
-        {/* Simple Cycle Wheel CSS Implementation */}
         <div style={{
           width: '250px',
           height: '250px',
           borderRadius: '50%',
           background: cycle ? 'var(--surface)' : 'var(--border)',
-          border: '10px solid var(--primary-light)',
+          border: `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : selectedChance === 'Đang Hành Kinh' ? '#e84393' : 'var(--primary-light)'}`,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: 'var(--shadow-md)'
+          boxShadow: selectedChance === 'Trứng rụng' 
+            ? '0 0 30px rgba(253, 203, 110, 0.3)' 
+            : 'var(--shadow-md)',
+          transition: 'all 0.4s ease'
         }}>
           {cycle ? (
             <>
-              <h2 style={{ fontSize: '3.5rem', margin: 0, color: 'var(--primary)', lineHeight: 1 }}>
-                {daysUntilStart > 0 ? daysUntilStart : cycleDay}
-              </h2>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 500, marginTop: '8px' }}>
-                {daysUntilStart > 0 ? 'Ngày nữa tới kỳ' : 'Ngày của chu kỳ'}
-              </span>
+              {/* Main info: ovulation countdown or cycle day */}
+              {daysUntilOvulation !== null && daysUntilOvulation > 0 && selectedChance !== 'Đang Hành Kinh' ? (
+                <>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
+                    Rụng trứng sau
+                  </span>
+                  <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--secondary)', lineHeight: 1, fontWeight: 800 }}>
+                    {daysUntilOvulation}
+                  </h2>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem' }}>
+                    ngày
+                  </span>
+                </>
+              ) : daysUntilOvulation !== null && daysUntilOvulation <= 0 && selectedChance === 'Trứng rụng' ? (
+                <>
+                  <span style={{ color: 'var(--secondary)', fontWeight: 700, fontSize: '0.9rem' }}>
+                    🥚 Hôm nay
+                  </span>
+                  <h2 style={{ fontSize: '2rem', margin: '8px 0', color: 'var(--secondary)', lineHeight: 1.2, fontWeight: 800 }}>
+                    Rụng trứng
+                  </h2>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.8rem' }}>
+                    Đỉnh điểm thụ thai
+                  </span>
+                </>
+              ) : (
+                <>
+                  <h2 style={{ fontSize: '3.5rem', margin: 0, color: 'var(--primary)', lineHeight: 1 }}>
+                    {cycleDay > 0 ? cycleDay : 1}
+                  </h2>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, marginTop: '8px' }}>
+                    Ngày của chu kỳ
+                  </span>
+                </>
+              )}
               
+              {/* Pregnancy chance badge */}
               <div style={{ 
                 marginTop: '12px',                    
-                boxShadow: `0 0 30px ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'rgba(253, 203, 110, 0.4)' 
-                          : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'rgba(155, 89, 182, 0.3)' 
-                          : getPregnancyChance(new Date(), cycle) === 'Thấp' ? 'rgba(52, 152, 219, 0.2)'
-                          : getPregnancyChance(new Date(), cycle) === 'An toàn' ? 'rgba(46, 204, 113, 0.2)' 
+                boxShadow: `0 0 20px ${selectedChance === 'Trứng rụng' ? 'rgba(253, 203, 110, 0.4)' 
+                          : selectedChance === 'Cao' ? 'rgba(155, 89, 182, 0.3)' 
+                          : selectedChance === 'Thấp' ? 'rgba(52, 152, 219, 0.2)'
+                          : selectedChance === 'An toàn' ? 'rgba(46, 204, 113, 0.2)' 
                           : 'rgba(232, 67, 147, 0.2)'}`, 
                 padding: '6px 14px', 
                 borderRadius: '20px', 
                 fontSize: '0.8rem', 
                 fontWeight: 'bold',
-                whiteSpace: 'nowrap',
-                border: `2px solid ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' 
-                      : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'var(--primary)' 
-                      : getPregnancyChance(new Date(), cycle) === 'Thấp' ? '#3498db'
-                      : getPregnancyChance(new Date(), cycle) === 'An toàn' ? '#27ae60' 
+                whiteSpace: 'nowrap' as const,
+                border: `2px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' 
+                      : selectedChance === 'Cao' ? 'var(--primary)' 
+                      : selectedChance === 'Thấp' ? '#3498db'
+                      : selectedChance === 'An toàn' ? '#27ae60' 
                       : '#e84393'}`,
-                color: getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--text-main)'
-                     : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'var(--primary)' 
-                     : getPregnancyChance(new Date(), cycle) === 'Thấp' ? '#3498db'
-                     : getPregnancyChance(new Date(), cycle) === 'An toàn' ? '#27ae60' 
+                color: selectedChance === 'Trứng rụng' ? 'var(--text-main)'
+                     : selectedChance === 'Cao' ? 'var(--primary)' 
+                     : selectedChance === 'Thấp' ? '#3498db'
+                     : selectedChance === 'An toàn' ? '#27ae60' 
                      : '#e84393'
               }}>
-                Thụ thai: {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'Đỉnh điểm' : getPregnancyChance(new Date(), cycle)}
+                Thụ thai: {selectedChance === 'Trứng rụng' ? 'Đỉnh điểm' : selectedChance}
               </div>
             </>
           ) : (
@@ -153,6 +320,28 @@ const Home = () => {
           )}
         </div>
       </div>
+
+      {/* Ovulation date info banner */}
+      {cycle && ovulationDate && (
+        <div style={{
+          background: 'var(--surface)',
+          borderRadius: '12px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--border)'
+        }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            🥚 Ngày rụng trứng dự kiến
+          </span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'var(--secondary)' }}>
+            {format(ovulationDate, 'dd/MM/yyyy')}
+          </span>
+        </div>
+      )}
 
       {/* Countdown banner */}
       {cycle && daysUntilPeriod !== null && (
@@ -174,6 +363,28 @@ const Home = () => {
         </div>
       )}
 
+      {/* Daily Insights - Flo style */}
+      {cycle && (
+        <div className="daily-insights">
+          <h3>Thông tin hàng ngày · {format(selectedDate, "d 'thg' M", { locale: vi })}</h3>
+          <div className="insight-cards">
+            <div className="insight-card pregnancy">
+              <h4>{isSelectedToday ? 'Cơ hội thụ thai hôm nay' : `Cơ hội thụ thai ${format(selectedDate, 'd/M')}`}</h4>
+              <p>{selectedChance === 'Trứng rụng' ? '🔥 Đỉnh điểm' : selectedChance === 'Cao' ? '⚠️ Cao' : selectedChance === 'Thấp' ? '📉 Thấp' : selectedChance === 'An toàn' ? '✅ An toàn' : '🩸 Hành kinh'}</p>
+            </div>
+            <div className="insight-card symptoms">
+              <h4>Triệu chứng có thể gặp</h4>
+              <p>{getSymptomHint(selectedChance).substring(0, 50)}...</p>
+            </div>
+            <div className="insight-card tips">
+              <h4>Lời khuyên cho bạn</h4>
+              <p>{getDailyTip(selectedChance).substring(0, 50)}...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions */}
       <div className="card">
         <h2>Thao tác nhanh</h2>
         {usePartnerData ? (
@@ -206,19 +417,32 @@ const Home = () => {
         )}
       </div>
 
+      {/* Today's Status Detail */}
       <div className="card">
-        <h2>Tình trạng hôm nay</h2>
+        <h2>Tình trạng {isSelectedToday ? 'hôm nay' : format(selectedDate, "d 'thg' M")}</h2>
         {cycle ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--surface)', borderLeft: `4px solid ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' : getPregnancyChance(new Date(), cycle) === 'Cao' ? '#f8a5c2' : getPregnancyChance(new Date(), cycle) === 'Thấp' ? '#3498db' : '#2ecc71'}` }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Tỉ lệ thụ thai: <span style={{ color: 'var(--primary)' }}>{getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'Đỉnh điểm' : getPregnancyChance(new Date(), cycle)}</span></h3>
+            <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--surface)', borderLeft: `4px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : selectedChance === 'Cao' ? '#f8a5c2' : selectedChance === 'Thấp' ? '#3498db' : selectedChance === 'An toàn' ? '#2ecc71' : '#e84393'}` }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Tỉ lệ thụ thai: <span style={{ color: 'var(--primary)' }}>{selectedChance === 'Trứng rụng' ? 'Đỉnh điểm' : selectedChance}</span></h3>
               <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' && 'Hôm nay là ngày rụng trứng! Khả năng thụ thai đạt đỉnh điểm. Nếu không muốn có thai, hãy sử dụng biện pháp tránh thai an toàn.'}
-                {getPregnancyChance(new Date(), cycle) === 'Cao' && 'Bạn đang trong cửa sổ thụ thai (khoảng thời gian dễ mang thai nhất trong tháng). Hãy lưu ý nhé!'}
-                {getPregnancyChance(new Date(), cycle) === 'Thấp' && 'Khả năng thụ thai thấp, tuy nhiên vẫn có một phần trăm nhỏ xác suất xảy ra do thời gian rụng trứng có thể xê dịch.'}
-                {getPregnancyChance(new Date(), cycle) === 'An toàn' && 'Hôm nay là ngày an toàn. Tỉ lệ mang thai gần như bằng 0, cơ thể đang ở trạng thái ổn định.'}
-                {getPregnancyChance(new Date(), cycle) === 'Đang Hành Kinh' && 'Đang trong kỳ kinh nguyệt. Hãy giữ ấm cơ thể và nghỉ ngơi nhiều hơn.'}
+                {selectedChance === 'Trứng rụng' && 'Hôm nay là ngày rụng trứng! Khả năng thụ thai đạt đỉnh điểm. Nếu không muốn có thai, hãy sử dụng biện pháp tránh thai an toàn.'}
+                {selectedChance === 'Cao' && 'Bạn đang trong cửa sổ thụ thai (khoảng thời gian dễ mang thai nhất trong tháng). Hãy lưu ý nhé!'}
+                {selectedChance === 'Thấp' && 'Khả năng thụ thai thấp, tuy nhiên vẫn có một phần trăm nhỏ xác suất xảy ra do thời gian rụng trứng có thể xê dịch.'}
+                {selectedChance === 'An toàn' && 'Hôm nay là ngày an toàn. Tỉ lệ mang thai gần như bằng 0, cơ thể đang ở trạng thái ổn định.'}
+                {selectedChance === 'Đang Hành Kinh' && 'Đang trong kỳ kinh nguyệt. Hãy giữ ấm cơ thể và nghỉ ngơi nhiều hơn.'}
               </p>
+            </div>
+
+            {/* Symptom & Tip detail */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(251, 197, 49, 0.08)', border: '1px solid rgba(251, 197, 49, 0.2)' }}>
+                <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--secondary)', marginBottom: '6px' }}>💡 Triệu chứng</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{getSymptomHint(selectedChance)}</p>
+              </div>
+              <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(155, 89, 182, 0.06)', border: '1px solid rgba(155, 89, 182, 0.15)' }}>
+                <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '6px' }}>🌸 Lời khuyên</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{getDailyTip(selectedChance)}</p>
+              </div>
             </div>
           </div>
         ) : (
