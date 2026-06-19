@@ -7,7 +7,7 @@ const moodList = ['Vui vẻ', 'Buồn bã', 'Cáu kỉnh', 'Lo âu', 'Bình tĩn
 const bleedingMap: Record<string, string> = { 'light': 'Ít', 'medium': 'Vừa', 'heavy': 'Nhiều' };
 
 const Log = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, viewingUid, usePartnerData } = useAuth();
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [bleeding, setBleeding] = useState<'light' | 'medium' | 'heavy' | null>(null);
   const [symptoms, setSymptoms] = useState<string[]>([]);
@@ -16,8 +16,8 @@ const Log = () => {
 
   useEffect(() => {
     const fetchLog = async () => {
-      if (!currentUser) return;
-      const log = await getDailyLog(currentUser.uid, date);
+      if (!viewingUid) return;
+      const log = await getDailyLog(viewingUid, date);
       if (log) {
         setBleeding(log.bleeding);
         setSymptoms(log.symptoms || []);
@@ -29,7 +29,7 @@ const Log = () => {
       }
     };
     fetchLog();
-  }, [date, currentUser]);
+  }, [date, viewingUid]);
 
   const toggleArrayItem = (array: string[], setArray: (val: string[]) => void, item: string) => {
     if (array.includes(item)) {
@@ -54,8 +54,14 @@ const Log = () => {
 
   return (
     <div className="animate-fade-in">
-      <h1>Ghi chép hằng ngày</h1>
+      <h1>Ghi chép hằng ngày {usePartnerData && '(Chế độ xem Bạn đời)'}</h1>
       
+      {usePartnerData && (
+        <div style={{ background: '#ffeaa7', padding: '12px', borderRadius: '8px', color: '#d35400', marginBottom: '16px', fontSize: '0.9rem' }}>
+          Bạn đang xem dữ liệu của bạn đời. Không thể lưu thay đổi.
+        </div>
+      )}
+
       <div className="card">
         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Ngày</label>
         <input 
@@ -127,9 +133,11 @@ const Log = () => {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSave} disabled={saving}>
-        {saving ? 'Đang lưu...' : 'Lưu thông tin'}
-      </button>
+      {!usePartnerData && (
+        <button className="btn-primary" onClick={handleSave} disabled={saving}>
+          {saving ? 'Đang lưu...' : 'Lưu thông tin'}
+        </button>
+      )}
     </div>
   );
 };

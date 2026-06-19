@@ -5,18 +5,18 @@ import type { Cycle } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
 
 const CalendarPage = () => {
-  const { currentUser } = useAuth();
+  const { viewingUid, usePartnerData } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [cycle, setCycle] = useState<Cycle | null>(null);
 
   useEffect(() => {
     const fetchCycle = async () => {
-      if (!currentUser) return;
-      const data = await getLatestCycle(currentUser.uid);
+      if (!viewingUid) return;
+      const data = await getLatestCycle(viewingUid);
       setCycle(data);
     };
     fetchCycle();
-  }, [currentUser]);
+  }, [viewingUid]);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
@@ -46,7 +46,7 @@ const CalendarPage = () => {
 
   return (
     <div className="animate-fade-in">
-      <h1>Lịch</h1>
+      <h1>Lịch {usePartnerData && '(Bạn đời)'}</h1>
       
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>

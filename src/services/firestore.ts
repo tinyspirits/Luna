@@ -19,6 +19,11 @@ export interface Cycle {
   expectedOvulation: Date;
 }
 
+export interface UserProfile {
+  uid: string;
+  partnerUid?: string;
+}
+
 // Convert Firestore Timestamp to Date, safely
 const toDate = (timestamp: any): Date | null => {
   if (!timestamp) return null;
@@ -39,6 +44,26 @@ export const getUserSettings = async (userId: string): Promise<UserSettings> => 
 export const saveUserSettings = async (userId: string, settings: UserSettings) => {
   const userRef = doc(db, 'users', userId);
   await setDoc(userRef, settings, { merge: true });
+};
+
+export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  const userRef = doc(db, 'users', userId);
+  const snap = await getDoc(userRef);
+  if (snap.exists()) {
+    return snap.data() as UserProfile;
+  }
+  return null;
+};
+
+export const linkPartner = async (userId: string, partnerUid: string) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, { partnerUid }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("Error linking partner:", error);
+    return false;
+  }
 };
 
 export const getLatestCycle = async (userId: string): Promise<Cycle | null> => {
@@ -91,6 +116,24 @@ export const startNewCycle = async (userId: string, startDate: Date, userSetting
     return true;
   } catch (error) {
     console.error("Error starting new cycle:", error);
+    return false;
+  }
+};
+
+export const addHistoricalCycle = async (userId: string, startDate: Date, endDate: Date, userSettings: UserSettings) => {
+  try {
+    const predictions = calculatePredictions(startDate, userSettings);
+    const cycleData = {
+      startDate,
+      endDate,
+      expectedNextPeriod: predictions.nextPeriodStart,
+      expectedOvulation: predictions.ovulationDate,
+    };
+    const cyclesRef = collection(db, 'users', userId, 'cycles');
+    await addDoc(cyclesRef, cycleData);
+    return true;
+  } catch (error) {
+    console.error("Error adding historical cycle:", error);
     return false;
   }
 };
