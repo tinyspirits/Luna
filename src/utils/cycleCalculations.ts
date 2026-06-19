@@ -100,7 +100,7 @@ export const getCycleDay = (lastPeriodStartDate: Date, currentDate: Date) => {
   return differenceInDays(currentDate, lastPeriodStartDate) + 1;
 };
 
-export type PregnancyChance = 'Trứng rụng' | 'Cao' | 'An toàn' | 'Đang Hành Kinh' | 'Chưa rõ';
+export type PregnancyChance = 'Trứng rụng' | 'Cao' | 'Thấp' | 'An toàn' | 'Đang Hành Kinh' | 'Chưa rõ';
 
 export const predictFutureCycles = (cycles: Cycle[], count: number = 6) => {
   if (cycles.length === 0) return [];
@@ -159,6 +159,15 @@ export const getGlobalPregnancyChance = (currentDate: Date, cycles: Cycle[]): Pr
       end: addDays(f.ovulation, 1)
     });
     if (isFertile) return 'Cao';
+
+    const isLow = isWithinInterval(currentDate, {
+      start: subDays(f.ovulation, 8),
+      end: subDays(f.ovulation, 6)
+    }) || isWithinInterval(currentDate, {
+      start: addDays(f.ovulation, 2),
+      end: addDays(f.ovulation, 3)
+    });
+    if (isLow) return 'Thấp';
   }
 
   return 'An toàn';
@@ -182,6 +191,15 @@ export const getPregnancyChance = (currentDate: Date, cycle: Cycle): PregnancyCh
     end: addDays(cycle.expectedOvulation, 1)
   });
   if (isFertile) return 'Cao';
+
+  const isLow = isWithinInterval(currentDate, {
+    start: subDays(cycle.expectedOvulation, 8),
+    end: subDays(cycle.expectedOvulation, 6)
+  }) || isWithinInterval(currentDate, {
+    start: addDays(cycle.expectedOvulation, 2),
+    end: addDays(cycle.expectedOvulation, 3)
+  });
+  if (isLow) return 'Thấp';
 
   return 'An toàn';
 };

@@ -66,12 +66,13 @@ const CalendarPage = () => {
             const isPeriod = chance === 'Đang Hành Kinh';
             const isOvulation = chance === 'Trứng rụng';
             const isFertile = chance === 'Cao';
+            const isLow = chance === 'Thấp';
             const isSafe = chance === 'An toàn';
 
             return (
               <div 
                 key={day.toString()} 
-                className={`calendar-cell ${!isSameMonth(day, monthStart) ? 'disabled' : ''} ${isSameDay(day, new Date()) ? 'today' : ''} ${isPeriod ? 'period' : ''} ${isOvulation ? 'ovulation' : ''} ${isFertile ? 'fertile' : ''} ${isSafe ? 'safe' : ''}`}
+                className={`calendar-cell ${!isSameMonth(day, monthStart) ? 'disabled' : ''} ${isSameDay(day, new Date()) ? 'today' : ''} ${isPeriod ? 'period' : ''} ${isOvulation ? 'ovulation' : ''} ${isFertile ? 'fertile' : ''} ${isLow ? 'low-chance' : ''} ${isSafe ? 'safe' : ''}`}
                 style={{ position: 'relative', padding: '10px 0' }}
               >
                 {format(day, 'd')}
@@ -91,8 +92,11 @@ const CalendarPage = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(248, 165, 194, 0.5)', border: '1px dashed var(--secondary)' }}></div> Cửa sổ thụ thai (Tỉ lệ mang thai CAO)
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(52, 152, 219, 0.4)' }}></div> Ngày an toàn tương đối (Tỉ lệ mang thai THẤP)
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(46, 204, 113, 0.4)' }}></div> Ngày an toàn (Tỉ lệ mang thai THẤP)
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(46, 204, 113, 0.4)' }}></div> Ngày an toàn tuyệt đối (Tỉ lệ mang thai 0%)
           </div>
         </div>
       </div>

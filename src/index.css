@@ -222,6 +222,10 @@ p { color: var(--text-muted); font-size: 0.95rem; }
   background: rgba(46, 204, 113, 0.15); /* Màu xanh nhạt tượng trưng cho an toàn */
 }
 
+.calendar-cell.low-chance {
+  background: rgba(52, 152, 219, 0.15); /* Màu xanh biển nhạt tượng trưng cho tỉ lệ thấp */
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }

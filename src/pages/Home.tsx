@@ -124,6 +124,7 @@ const Home = () => {
                 marginTop: '12px',                    
                 boxShadow: `0 0 30px ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'rgba(253, 203, 110, 0.4)' 
                           : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'rgba(155, 89, 182, 0.3)' 
+                          : getPregnancyChance(new Date(), cycle) === 'Thấp' ? 'rgba(52, 152, 219, 0.2)'
                           : getPregnancyChance(new Date(), cycle) === 'An toàn' ? 'rgba(46, 204, 113, 0.2)' 
                           : 'rgba(232, 67, 147, 0.2)'}`, 
                 padding: '6px 14px', 
@@ -133,10 +134,12 @@ const Home = () => {
                 whiteSpace: 'nowrap',
                 border: `2px solid ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' 
                       : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'var(--primary)' 
+                      : getPregnancyChance(new Date(), cycle) === 'Thấp' ? '#3498db'
                       : getPregnancyChance(new Date(), cycle) === 'An toàn' ? '#27ae60' 
                       : '#e84393'}`,
                 color: getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--text-main)'
                      : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'var(--primary)' 
+                     : getPregnancyChance(new Date(), cycle) === 'Thấp' ? '#3498db'
                      : getPregnancyChance(new Date(), cycle) === 'An toàn' ? '#27ae60' 
                      : '#e84393'
               }}>
@@ -207,12 +210,13 @@ const Home = () => {
         <h2>Tình trạng hôm nay</h2>
         {cycle ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--surface)', borderLeft: `4px solid ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' : getPregnancyChance(new Date(), cycle) === 'Cao' ? '#f8a5c2' : '#2ecc71'}` }}>
+            <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--surface)', borderLeft: `4px solid ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' : getPregnancyChance(new Date(), cycle) === 'Cao' ? '#f8a5c2' : getPregnancyChance(new Date(), cycle) === 'Thấp' ? '#3498db' : '#2ecc71'}` }}>
               <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Tỉ lệ thụ thai: <span style={{ color: 'var(--primary)' }}>{getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'Đỉnh điểm' : getPregnancyChance(new Date(), cycle)}</span></h3>
-              <p style={{ marginTop: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+              <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem', color: 'var(--text-main)' }}>
                 {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' && 'Hôm nay là ngày rụng trứng! Khả năng thụ thai đạt đỉnh điểm. Nếu không muốn có thai, hãy sử dụng biện pháp tránh thai an toàn.'}
                 {getPregnancyChance(new Date(), cycle) === 'Cao' && 'Bạn đang trong cửa sổ thụ thai (khoảng thời gian dễ mang thai nhất trong tháng). Hãy lưu ý nhé!'}
-                {getPregnancyChance(new Date(), cycle) === 'An toàn' && 'Hôm nay là ngày an toàn. Tỉ lệ mang thai rất thấp, cơ thể đang ở trạng thái ổn định.'}
+                {getPregnancyChance(new Date(), cycle) === 'Thấp' && 'Khả năng thụ thai thấp, tuy nhiên vẫn có một phần trăm nhỏ xác suất xảy ra do thời gian rụng trứng có thể xê dịch.'}
+                {getPregnancyChance(new Date(), cycle) === 'An toàn' && 'Hôm nay là ngày an toàn. Tỉ lệ mang thai gần như bằng 0, cơ thể đang ở trạng thái ổn định.'}
                 {getPregnancyChance(new Date(), cycle) === 'Đang Hành Kinh' && 'Đang trong kỳ kinh nguyệt. Hãy giữ ấm cơ thể và nghỉ ngơi nhiều hơn.'}
               </p>
             </div>
