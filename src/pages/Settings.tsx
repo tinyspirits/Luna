@@ -92,6 +92,26 @@ const Settings = () => {
         <h2>Tài khoản của bạn</h2>
         <p style={{ marginBottom: '16px' }}><strong>Email:</strong> {currentUser?.email}</p>
 
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+          <label style={{ fontWeight: 600 }}>Giới tính:</label>
+          <select 
+            value={profile?.gender || 'female'} 
+            onChange={async (e) => {
+              if (currentUser) {
+                await updateUserProfile(currentUser.uid, { gender: e.target.value as 'male' | 'female' });
+                await reloadProfile();
+              }
+            }}
+            style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', flex: 1, color: 'var(--text-main)', background: 'var(--surface)' }}
+          >
+            <option value="female">Nữ (Theo dõi chu kỳ)</option>
+            <option value="male">Nam (Theo dõi bạn đời)</option>
+          </select>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          {profile?.gender === 'male' ? 'Bạn đang ở chế độ xem chu kỳ của bạn đời. Nếu chưa kết nối, vui lòng nhập mã bên dưới.' : 'Chế độ Nữ cho phép bạn tự theo dõi chu kỳ của mình và xem chu kỳ của bạn đời (nếu có).'}
+        </p>
+
         <button className="btn-secondary" onClick={handleLogout} style={{ width: '100%', color: '#d63031', borderColor: '#d63031' }}>
           Đăng xuất
         </button>

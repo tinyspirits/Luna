@@ -63,18 +63,35 @@ const Home = () => {
   const smartPred = allCycles.length > 0 ? calculateSmartPredictions(allCycles) : null;
   const daysUntilPeriod = smartPred?.daysUntilNextPeriod ?? (cycle ? Math.max(0, 28 - cycleDay) : null);
 
+  const isMale = profile?.gender === 'male';
+
+  // If male and not connected to a partner, show empty state immediately
+  if (isMale && !profile?.partnerUid) {
+    return (
+      <div className="animate-fade-in">
+        <h1>Chào buổi sáng 👋</h1>
+        <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <h2>Chưa kết nối bạn đời</h2>
+          <p style={{ color: 'var(--text-muted)', marginTop: '12px' }}>
+            Hãy vào phần <strong>Cài đặt</strong> và nhập mã của bạn đời để bắt đầu theo dõi chu kỳ của cô ấy nhé!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
     <div className="animate-fade-in">
-      {profile?.partnerUid && (
+      {profile?.partnerUid && !isMale && (
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'var(--surface)', padding: '4px', borderRadius: '8px' }}>
           <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: !usePartnerData ? 'var(--primary)' : 'transparent', color: !usePartnerData ? 'white' : 'var(--text-main)', fontWeight: !usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(false)}>Của mình</button>
           <button style={{ flex: 1, padding: '8px', borderRadius: '6px', background: usePartnerData ? 'var(--secondary)' : 'transparent', color: usePartnerData ? 'var(--text-main)' : 'var(--text-main)', fontWeight: usePartnerData ? 'bold' : 'normal' }} onClick={() => setUsePartnerData(true)}>Của {profile?.partnerName || 'bạn đời'}</button>
         </div>
       )}
 
-      <h1>{usePartnerData ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : 'Chào buổi sáng 👋'}</h1>
-      <p style={{ marginBottom: '24px' }}>Hôm nay cơ thể {usePartnerData ? (profile?.partnerName || 'người ấy') : 'bạn'} cảm thấy thế nào?</p>
+      <h1>{isMale && profile?.partnerUid ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : (usePartnerData ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : 'Chào buổi sáng 👋')}</h1>
+      <p style={{ marginBottom: '24px' }}>Hôm nay cơ thể {isMale || usePartnerData ? (profile?.partnerName || 'người ấy') : 'bạn'} cảm thấy thế nào?</p>
 
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
         {/* Simple Cycle Wheel CSS Implementation */}

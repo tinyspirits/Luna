@@ -51,7 +51,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (currentUser) await fetchProfile(currentUser.uid);
   };
 
-  const [usePartnerData, setUsePartnerData] = useState(false);
+  const [usePartnerDataState, setUsePartnerData] = useState(false);
+  const isMale = profile?.gender === 'male';
+  const usePartnerData = isMale ? true : usePartnerDataState;
   const viewingUid = (usePartnerData && profile?.partnerUid) ? profile.partnerUid : (currentUser?.uid || '');
 
   const value = {

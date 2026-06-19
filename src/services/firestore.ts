@@ -23,6 +23,7 @@ export interface UserProfile {
   uid: string;
   partnerUid?: string;
   partnerName?: string;
+  gender?: 'male' | 'female';
   themeBackground?: string;
   periodIcon?: string;
 }
@@ -62,6 +63,11 @@ export const linkPartner = async (userId: string, partnerUid: string, partnerNam
   try {
     const userRef = doc(db, 'users', userId);
     await setDoc(userRef, { partnerUid, partnerName: partnerName || 'Bạn đời' }, { merge: true });
+    
+    // Two-way connection: link the partner back to this user
+    const partnerRef = doc(db, 'users', partnerUid);
+    await setDoc(partnerRef, { partnerUid: userId, partnerName: 'Bạn đời' }, { merge: true });
+    
     return true;
   } catch (error) {
     console.error("Error linking partner:", error);
