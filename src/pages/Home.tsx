@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { getCycleDay, getPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
@@ -6,7 +6,7 @@ import { differenceInDays, format, addDays, isSameDay, startOfWeek, endOfWeek, e
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
 import CycleCalendarModal from '../components/CycleCalendarModal';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 
 const WEEKDAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
@@ -18,6 +18,14 @@ const Home = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekOffset, setWeekOffset] = useState(0);
+
+  // Swipe gesture state for day strip
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchDeltaX = useRef(0);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const isSwiping = useRef(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
 
   useEffect(() => {
     const fetchCycle = async () => {
@@ -39,6 +47,49 @@ const Home = () => {
     setSelectedDate(new Date());
     setWeekOffset(0);
   }, [usePartnerData]);
+
+  // Swipe handlers for day strip
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchDeltaX.current = 0;
+    isSwiping.current = false;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    
+    // Only swipe horizontally if horizontal movement > vertical
+    if (!isSwiping.current && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      isSwiping.current = true;
+    }
+    
+    if (isSwiping.current) {
+      e.preventDefault();
+      touchDeltaX.current = deltaX;
+      setSwipeOffset(deltaX * 0.4); // dampen the offset
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const SWIPE_THRESHOLD = 50;
+    if (Math.abs(touchDeltaX.current) > SWIPE_THRESHOLD) {
+      if (touchDeltaX.current > 0) {
+        // Swipe right → previous week
+        setWeekOffset(w => w - 1);
+      } else {
+        // Swipe left → next week
+        setWeekOffset(w => w + 1);
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchDeltaX.current = 0;
+    isSwiping.current = false;
+    setSwipeOffset(0);
+  }, []);
 
   const handleStartPeriod = async () => {
     if (!currentUser) return;
@@ -206,25 +257,39 @@ const Home = () => {
         ))}
       </div>
 
-      {/* Day Strip - 7 days grid */}
-      <div className="day-strip">
-        {weekDays.map(day => {
-          const chance = getChanceForDate(day);
-          const markerClass = getMarkerClass(chance);
-          const isActive = isSameDay(day, selectedDate);
-          const isDayToday = isSameDay(day, today);
+      {/* Day Strip - 7 days grid with swipe */}
+      <div 
+        className="day-strip-swipe-container"
+        ref={stripRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div 
+          className="day-strip" 
+          style={{ 
+            transform: `translateX(${swipeOffset}px)`,
+            transition: swipeOffset === 0 ? 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+          }}
+        >
+          {weekDays.map(day => {
+            const chance = getChanceForDate(day);
+            const markerClass = getMarkerClass(chance);
+            const isActive = isSameDay(day, selectedDate);
+            const isDayToday = isSameDay(day, today);
 
-          return (
-            <div
-              key={day.toISOString()}
-              className={`day-strip-item ${isActive ? 'active' : ''} ${isDayToday ? 'today' : ''}`}
-              onClick={() => setSelectedDate(day)}
-            >
-              <span className="day-num">{format(day, 'd')}</span>
-              {cycle && markerClass && <div className={`day-marker ${markerClass}`} />}
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={day.toISOString()}
+                className={`day-strip-item ${isActive ? 'active' : ''} ${isDayToday ? 'today' : ''}`}
+                onClick={() => setSelectedDate(day)}
+              >
+                <span className="day-num">{format(day, 'd')}</span>
+                {cycle && markerClass && <div className={`day-marker ${markerClass}`} />}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Main Heading */}
@@ -362,6 +427,162 @@ const Home = () => {
           </span>
         </div>
       )}
+
+      {/* Xu hướng chu kỳ - Cycle Trend Chart */}
+      {allCycles.length >= 2 && (() => {
+        const sortedCycles = [...allCycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+        const cycleLengths: { label: string; length: number; startDate: Date }[] = [];
+        
+        for (let i = 1; i < sortedCycles.length; i++) {
+          const len = differenceInDays(sortedCycles[i].startDate, sortedCycles[i - 1].startDate);
+          if (len > 15 && len < 60) {
+            cycleLengths.push({
+              label: format(sortedCycles[i - 1].startDate, "d 'thg' M", { locale: vi }),
+              length: len,
+              startDate: sortedCycles[i - 1].startDate,
+            });
+          }
+        }
+        // Add current cycle
+        const lastCycle = sortedCycles[sortedCycles.length - 1];
+        const currentLen = differenceInDays(today, lastCycle.startDate);
+        if (currentLen > 0) {
+          cycleLengths.push({
+            label: 'Hiện tại',
+            length: currentLen,
+            startDate: lastCycle.startDate,
+          });
+        }
+
+        if (cycleLengths.length < 2) return null;
+
+        const avgLen = smartPred?.averageCycleLength ?? 28;
+        const minLen = Math.min(...cycleLengths.map(c => c.length));
+        const maxLen = Math.max(...cycleLengths.map(c => c.length));
+        const range = Math.max(maxLen - minLen, 8);
+        const paddedMin = minLen - 2;
+        const paddedRange = range + 4;
+
+        // SVG dimensions
+        const svgWidth = 320;
+        const svgHeight = 140;
+        const padX = 30;
+        const padY = 20;
+        const chartW = svgWidth - padX * 2;
+        const chartH = svgHeight - padY * 2;
+
+        const points = cycleLengths.map((c, i) => {
+          const x = padX + (i / (cycleLengths.length - 1)) * chartW;
+          const y = padY + chartH - ((c.length - paddedMin) / paddedRange) * chartH;
+          return { x, y, ...c };
+        });
+
+        // Create smooth curve path
+        const pathD = points.length > 1 
+          ? points.reduce((acc, pt, i) => {
+              if (i === 0) return `M ${pt.x} ${pt.y}`;
+              const prev = points[i - 1];
+              const cpx1 = prev.x + (pt.x - prev.x) * 0.4;
+              const cpx2 = pt.x - (pt.x - prev.x) * 0.4;
+              return `${acc} C ${cpx1} ${prev.y} ${cpx2} ${pt.y} ${pt.x} ${pt.y}`;
+            }, '')
+          : '';
+
+        // Average line Y
+        const avgY = padY + chartH - ((avgLen - paddedMin) / paddedRange) * chartH;
+
+        // Determine abnormal points (>= 7 days deviation from average)
+        const ABNORMAL_THRESHOLD = 7;
+
+        return (
+          <div className="card cycle-trend-card">
+            <div className="cycle-trend-header">
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                Xu hướng chu kỳ
+              </h2>
+              <Info size={16} style={{ color: 'var(--text-muted)' }} />
+            </div>
+            
+            <div className="cycle-trend-chart">
+              <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="xMidYMid meet" width="100%">
+                {/* Grid lines */}
+                {[0, 0.25, 0.5, 0.75, 1].map((frac, i) => {
+                  const gy = padY + chartH * (1 - frac);
+                  return (
+                    <line key={i} x1={padX} y1={gy} x2={svgWidth - padX} y2={gy}
+                      stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" />
+                  );
+                })}
+
+                {/* Average line */}
+                <line x1={padX} y1={avgY} x2={svgWidth - padX} y2={avgY}
+                  stroke="var(--primary)" strokeWidth="1" strokeDasharray="6,3" opacity="0.5" />
+                <text x={svgWidth - padX + 4} y={avgY + 3} fontSize="8" fill="var(--primary)" opacity="0.7">
+                  TB
+                </text>
+
+                {/* Area fill under curve */}
+                {points.length > 1 && (
+                  <path
+                    d={`${pathD} L ${points[points.length - 1].x} ${padY + chartH} L ${points[0].x} ${padY + chartH} Z`}
+                    fill="url(#trendGradient)"
+                    opacity="0.3"
+                  />
+                )}
+
+                {/* Gradient definition */}
+                <defs>
+                  <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.02" />
+                  </linearGradient>
+                </defs>
+
+                {/* Smooth curve line */}
+                <path d={pathD} fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                {/* Data points */}
+                {points.map((pt, i) => {
+                  const isAbnormal = Math.abs(pt.length - avgLen) >= ABNORMAL_THRESHOLD;
+                  return (
+                    <g key={i}>
+                      {/* Abnormal glow */}
+                      {isAbnormal && (
+                        <>
+                          <circle cx={pt.x} cy={pt.y} r="12" fill={pt.length > avgLen ? 'rgba(232,67,147,0.15)' : 'rgba(253,203,110,0.2)'} />
+                          <circle cx={pt.x} cy={pt.y} r="8" fill={pt.length > avgLen ? 'rgba(232,67,147,0.25)' : 'rgba(253,203,110,0.35)'} />
+                        </>
+                      )}
+                      <circle cx={pt.x} cy={pt.y} r={isAbnormal ? '5.5' : '4'}
+                        fill={isAbnormal ? (pt.length > avgLen ? '#e84393' : '#fbc531') : 'var(--text-muted)'}
+                        stroke="white" strokeWidth="2" />
+                      {/* Abnormal label */}
+                      {isAbnormal && (
+                        <text x={pt.x} y={pt.y + (pt.length > avgLen ? -16 : 18)} 
+                          textAnchor="middle" fontSize="8" fontWeight="700"
+                          fill={pt.length > avgLen ? '#e84393' : '#d4850e'}>
+                          BẤT THƯỜNG
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+
+                {/* X-axis labels */}
+                {points.map((pt, i) => (
+                  <text key={i} x={pt.x} y={svgHeight - 2} textAnchor="middle" fontSize="7" fill="var(--text-muted)">
+                    {pt.label.length > 8 ? pt.label.substring(0, 8) : pt.label}
+                  </text>
+                ))}
+              </svg>
+            </div>
+
+            <p className="cycle-trend-description">
+              Biểu đồ cho thấy xu hướng độ dài chu kỳ của bạn. Các điểm bất thường được đánh dấu để bạn theo dõi.
+            </p>
+          </div>
+        );
+      })()}
 
       {/* Daily Insights - Flo style */}
       {cycle && (
