@@ -22,6 +22,8 @@ const Settings = () => {
   const [savingTheme, setSavingTheme] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
+  const [editingPartnerName, setEditingPartnerName] = useState(false);
+  const [newPartnerName, setNewPartnerName] = useState('');
 
   const handleLogout = async () => {
     try {
@@ -140,16 +142,62 @@ const Settings = () => {
         </div>
 
         {profile?.partnerUid ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(46, 204, 113, 0.1)', padding: '12px', borderRadius: '8px', border: '1px solid #27ae60' }}>
-            <p style={{ color: '#27ae60', fontWeight: 600, margin: 0 }}>✅ Đã kết nối: {profile.partnerName || 'bạn đời'} ({profile.partnerUid.substring(0, 8)}...)</p>
-            <button 
-              onClick={() => setShowUnlinkConfirm(true)} 
-              className="btn-secondary" 
-              style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}
-              disabled={linking}
-            >
-              Hủy
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(46, 204, 113, 0.1)', padding: '16px', borderRadius: '8px', border: '1px solid #27ae60' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ color: '#27ae60', fontWeight: 600, margin: 0 }}>✅ Đã kết nối: ({profile.partnerUid.substring(0, 8)}...)</p>
+              <button 
+                onClick={() => setShowUnlinkConfirm(true)} 
+                className="btn-secondary" 
+                style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                disabled={linking}
+              >
+                Hủy kết nối
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>Tên hiển thị:</label>
+              {editingPartnerName ? (
+                <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
+                  <input 
+                    type="text" 
+                    value={newPartnerName} 
+                    onChange={e => setNewPartnerName(e.target.value)} 
+                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--primary)', flex: 1, outline: 'none' }} 
+                    autoFocus
+                  />
+                  <button 
+                    className="btn-primary" 
+                    style={{ padding: '6px 12px', fontSize: '0.8rem' }} 
+                    onClick={async () => {
+                      if (!currentUser || !newPartnerName.trim()) return;
+                      await updateUserProfile(currentUser.uid, { partnerName: newPartnerName.trim() });
+                      await reloadProfile();
+                      setEditingPartnerName(false);
+                    }}
+                  >
+                    Lưu
+                  </button>
+                  <button 
+                    className="btn-secondary" 
+                    style={{ padding: '6px 12px', fontSize: '0.8rem' }} 
+                    onClick={() => setEditingPartnerName(false)}
+                  >
+                    Hủy
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <span style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{profile.partnerName || 'bạn đời'}</span>
+                  <button 
+                    onClick={() => { setNewPartnerName(profile.partnerName || ''); setEditingPartnerName(true); }} 
+                    style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline', padding: 0 }}
+                  >
+                    Đổi tên
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

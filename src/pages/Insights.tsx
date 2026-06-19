@@ -11,6 +11,7 @@ const Insights = () => {
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [cycleToDelete, setCycleToDelete] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number | 'recent'>('recent');
 
   useEffect(() => {
     const fetch = async () => {
@@ -94,6 +95,7 @@ const Insights = () => {
   }, {} as Record<number, typeof cycleHistory>);
   
   const sortedYears = Object.keys(groupedHistory).map(Number).sort((a, b) => b - a);
+  const displayYears = selectedYear === 'recent' ? sortedYears.slice(0, 2) : [selectedYear as number];
 
   // Điểm sức khỏe
   const healthScore = Math.min(100, 40 + cycles.length * 8 + (prediction.isIrregular ? -15 : 10) + (prediction.confidence === 'high' ? 15 : prediction.confidence === 'medium' ? 8 : 0));
@@ -162,12 +164,22 @@ const Insights = () => {
       {/* Biểu đồ Flo-style: Độ dài chu kỳ */}
       <div className="card" style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
-          <h2 style={{ margin: 0 }}>Độ dài chu kỳ</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ margin: 0 }}>Độ dài chu kỳ</h2>
+            <select 
+              value={selectedYear} 
+              onChange={e => setSelectedYear(e.target.value === 'recent' ? 'recent' : Number(e.target.value))}
+              style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--surface)', color: 'var(--text-main)', cursor: 'pointer' }}
+            >
+              <option value="recent">Gần đây</option>
+              {sortedYears.map(y => <option key={y} value={y}>Năm {y}</option>)}
+            </select>
+          </div>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', letterSpacing: '0.05em' }}>TRUNG BÌNH: {prediction.averageCycleLength} ng</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {sortedYears.map((year, yIdx) => (
+          {displayYears.map((year, yIdx) => (
             <div key={year}>
               <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>Năm {year}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
