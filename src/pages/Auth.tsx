@@ -32,7 +32,9 @@ const Auth = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '80vh' }}>
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '8px' }}>Luna</h1>
+        <h1 style={{ fontSize: '3rem', color: 'var(--primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+          🌙 Luna
+        </h1>
         <p>Theo dõi sức khỏe & Chu kỳ của bạn</p>
       </div>
 
