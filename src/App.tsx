@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import { Home as HomeIcon, PlusCircle, Calendar as CalendarIcon, Settings as SettingsIcon } from 'lucide-react';
 import Home from './pages/Home';
@@ -90,7 +90,7 @@ function App() {
   return (
     <AuthProvider>
       <ThemeWrapper>
-        <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <HashRouter basename={import.meta.env.BASE_URL}>
           <div className="app-container">
             <div className="content-area">
               <Routes>
@@ -103,7 +103,7 @@ function App() {
             </div>
             <Navigation />
           </div>
-        </BrowserRouter>
+        </HashRouter>
       </ThemeWrapper>
     </AuthProvider>
   );
