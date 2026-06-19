@@ -32,7 +32,7 @@ const Home = () => {
   const circleTouchStartY = useRef<number | null>(null);
   const circleTouchDeltaX = useRef(0);
   const isCircleSwiping = useRef(false);
-  const [circleSwipeOffset, setCircleSwipeOffset] = useState(0);
+  const [circleSlide, setCircleSlide] = useState({ offset: 0, transition: 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)', opacity: 1 });
 
   useEffect(() => {
     const fetchCycle = async () => {
@@ -111,7 +111,6 @@ const Home = () => {
     const deltaX = e.touches[0].clientX - circleTouchStartX.current;
     const deltaY = e.touches[0].clientY - circleTouchStartY.current;
     
-    // Only swipe horizontally if horizontal movement > vertical
     if (!isCircleSwiping.current && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       isCircleSwiping.current = true;
     }
@@ -119,40 +118,72 @@ const Home = () => {
     if (isCircleSwiping.current) {
       e.preventDefault();
       circleTouchDeltaX.current = deltaX;
-      setCircleSwipeOffset(deltaX * 0.5); // dampen the offset
+      // 1:1 tracking for immediate feel, fade out slightly as it moves away
+      setCircleSlide({ 
+        offset: deltaX, 
+        transition: 'none', 
+        opacity: Math.max(0.4, 1 - Math.abs(deltaX) / 300) 
+      });
     }
   }, []);
 
   const handleCircleTouchEnd = useCallback(() => {
-    const SWIPE_THRESHOLD = 40;
-    if (Math.abs(circleTouchDeltaX.current) > SWIPE_THRESHOLD) {
-      if (circleTouchDeltaX.current > 0) {
-        // Swipe right → previous day
+    const SWIPE_THRESHOLD = 50;
+    const deltaX = circleTouchDeltaX.current;
+    
+    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      const isSwipingRight = deltaX > 0;
+      
+      // Animate out completely
+      setCircleSlide({ 
+        offset: isSwipingRight ? 300 : -300, 
+        transition: 'transform 0.25s ease-out, opacity 0.2s ease-out', 
+        opacity: 0 
+      });
+
+      // Wait for out-animation to finish
+      setTimeout(() => {
         setSelectedDate(prev => {
-          const newDate = subDays(prev, 1);
-          // Auto-adjust week offset if moving to previous week
+          const newDate = isSwipingRight ? subDays(prev, 1) : addDays(prev, 1);
+          // Auto-adjust week offset if moving to another week
           if (!isSameDay(startOfWeek(newDate, { weekStartsOn: 1 }), startOfWeek(prev, { weekStartsOn: 1 }))) {
-            setWeekOffset(w => w - 1);
+            setWeekOffset(w => isSwipingRight ? w - 1 : w + 1);
           }
           return newDate;
         });
-      } else {
-        // Swipe left → next day
-        setSelectedDate(prev => {
-          const newDate = addDays(prev, 1);
-          // Auto-adjust week offset if moving to next week
-          if (!isSameDay(startOfWeek(newDate, { weekStartsOn: 1 }), startOfWeek(prev, { weekStartsOn: 1 }))) {
-            setWeekOffset(w => w + 1);
-          }
-          return newDate;
+
+        // Instantly move to opposite side for slide-in
+        setCircleSlide({ 
+          offset: isSwipingRight ? -300 : 300, 
+          transition: 'none', 
+          opacity: 0 
         });
-      }
+
+        // Trigger slide-in on next frame
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setCircleSlide({ 
+              offset: 0, 
+              transition: 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease-in', 
+              opacity: 1 
+            });
+          });
+        });
+      }, 200);
+
+    } else {
+      // Snap back if threshold not met
+      setCircleSlide({ 
+        offset: 0, 
+        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease', 
+        opacity: 1 
+      });
     }
+
     circleTouchStartX.current = null;
     circleTouchStartY.current = null;
     circleTouchDeltaX.current = 0;
     isCircleSwiping.current = false;
-    setCircleSwipeOffset(0);
   }, []);
 
   const handleStartPeriod = async () => {
@@ -246,7 +277,9 @@ const Home = () => {
   // Check if partner tab should be shown:
   // Female + Female partner: show toggle tab (can view both)
   // Male + Female partner: NO tab, always show partner data (handled by AuthContext)
-  const showPartnerTab = !!(profile?.partnerUid && profile?.gender === 'female' && profile?.partnerGender === 'female');
+  const isFemale = profile?.gender !== 'male';
+  const partnerIsFemale = profile?.partnerGender !== 'male';
+  const showPartnerTab = !!(profile?.partnerUid && isFemale && partnerIsFemale);
 
   // Whether user is in read-only mode (viewing partner's data or is male)
   const isReadOnly = isMale || usePartnerData;
@@ -400,11 +433,10 @@ const Home = () => {
           boxShadow: selectedChance === 'Trứng rụng' 
             ? '0 0 30px rgba(253, 203, 110, 0.3)' 
             : 'var(--shadow-md)',
-          transform: `translateX(${circleSwipeOffset}px)`,
-          transition: circleSwipeOffset === 0 
-            ? 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease, border-color 0.4s ease' 
-            : 'box-shadow 0.4s ease, border-color 0.4s ease',
-          willChange: 'transform'
+          transform: `translateX(${circleSlide.offset}px)`,
+          opacity: circleSlide.opacity,
+          transition: `${circleSlide.transition}, box-shadow 0.4s ease, border-color 0.4s ease`,
+          willChange: 'transform, opacity'
         }}>
           {cycle ? (
             <>
