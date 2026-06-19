@@ -113,23 +113,24 @@ const Home = () => {
         }}>
           {cycle ? (
             <>
-              <h2 style={{ fontSize: '3rem', margin: 0, color: 'var(--primary)' }}>
+              <h2 style={{ fontSize: '3.5rem', margin: 0, color: 'var(--primary)', lineHeight: 1 }}>
                 {daysUntilStart > 0 ? daysUntilStart : cycleDay}
               </h2>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 500, marginTop: '8px' }}>
                 {daysUntilStart > 0 ? 'Ngày nữa tới kỳ' : 'Ngày của chu kỳ'}
               </span>
               
               <div style={{ 
-                marginTop: '16px',                    
-                boxShadow: `0 0 40px ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'rgba(253, 203, 110, 0.4)' 
+                marginTop: '12px',                    
+                boxShadow: `0 0 30px ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'rgba(253, 203, 110, 0.4)' 
                           : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'rgba(155, 89, 182, 0.3)' 
                           : getPregnancyChance(new Date(), cycle) === 'An toàn' ? 'rgba(46, 204, 113, 0.2)' 
                           : 'rgba(232, 67, 147, 0.2)'}`, 
-                padding: '6px 16px', 
+                padding: '6px 14px', 
                 borderRadius: '20px', 
-                fontSize: '0.85rem', 
-                fontWeight: 'bold',                    
+                fontSize: '0.8rem', 
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
                 border: `2px solid ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' 
                       : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'var(--primary)' 
                       : getPregnancyChance(new Date(), cycle) === 'An toàn' ? '#27ae60' 
@@ -139,7 +140,7 @@ const Home = () => {
                      : getPregnancyChance(new Date(), cycle) === 'An toàn' ? '#27ae60' 
                      : '#e84393'
               }}>
-                Khả năng thụ thai: {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'Đỉnh điểm' : getPregnancyChance(new Date(), cycle)}
+                Thụ thai: {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'Đỉnh điểm' : getPregnancyChance(new Date(), cycle)}
               </div>
             </>
           ) : (
