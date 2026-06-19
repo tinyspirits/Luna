@@ -255,3 +255,21 @@ export const getDailyLog = async (userId: string, dateString: string): Promise<D
     return null;
   }
 };
+
+export const getAllDailyLogs = async (userId: string): Promise<DailyLog[]> => {
+  try {
+    const logsRef = collection(db, 'users', userId, 'dailyLogs');
+    const q = query(logsRef, orderBy('date', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        date: toDate(data.date)!
+      } as DailyLog;
+    });
+  } catch (error) {
+    console.error("Error getting all daily logs:", error);
+    return [];
+  }
+};

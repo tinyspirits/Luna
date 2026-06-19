@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getAllCycles, deleteCycle } from '../services/firestore';
-import type { Cycle } from '../services/firestore';
+import { getAllCycles, deleteCycle, getAllDailyLogs } from '../services/firestore';
+import type { Cycle, DailyLog } from '../services/firestore';
 import { calculateSmartPredictions } from '../utils/cycleCalculations';
 import { differenceInDays, format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,7 @@ import { BarChart2, TrendingUp, AlertTriangle, CheckCircle, Clock, Trash2 } from
 const Insights = () => {
   const { viewingUid, currentUser } = useAuth();
   const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [logs, setLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [cycleToDelete, setCycleToDelete] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | 'recent'>('recent');
@@ -19,6 +20,8 @@ const Insights = () => {
       setLoading(true);
       const data = await getAllCycles(viewingUid);
       setCycles(data);
+      const logData = await getAllDailyLogs(viewingUid);
+      setLogs(logData);
       setLoading(false);
     };
     fetch();
@@ -87,6 +90,22 @@ const Insights = () => {
   }
 
   const maxBarLen = cycleHistory.length > 0 ? Math.max(...cycleHistory.map(c => c.length)) : 28;
+
+  // Process symptoms & moods
+  const symptomCounts: Record<string, number> = {};
+  const moodCounts: Record<string, number> = {};
+  
+  logs.forEach(log => {
+    log.symptoms?.forEach(s => {
+      symptomCounts[s] = (symptomCounts[s] || 0) + 1;
+    });
+    log.mood?.forEach(m => {
+      moodCounts[m] = (moodCounts[m] || 0) + 1;
+    });
+  });
+
+  const topSymptoms = Object.entries(symptomCounts).sort((a,b) => b[1] - a[1]).slice(0, 4);
+  const topMoods = Object.entries(moodCounts).sort((a,b) => b[1] - a[1]).slice(0, 4);
 
   const groupedHistory = cycleHistory.reduce((acc, curr) => {
     if (!acc[curr.year]) acc[curr.year] = [];
@@ -221,6 +240,46 @@ const Insights = () => {
           ))}
         </div>
       </div>
+
+      {/* Phân tích triệu chứng & tâm trạng */}
+      {(topSymptoms.length > 0 || topMoods.length > 0) && (
+        <div className="card" style={{ marginBottom: '16px' }}>
+          <h2>Phân tích Thể chất & Tinh thần</h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+            Tổng hợp dựa trên các ghi chép hàng ngày của bạn.
+          </p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <h3 style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>Triệu chứng</h3>
+              {topSymptoms.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {topSymptoms.map(([symptom, count]) => (
+                    <div key={symptom} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', background: 'var(--background)', padding: '6px 8px', borderRadius: '4px' }}>
+                      <span style={{ color: 'var(--text-main)' }}>{symptom}</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{count} lần</span>
+                    </div>
+                  ))}
+                </div>
+              ) : <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Chưa có dữ liệu</span>}
+            </div>
+            
+            <div>
+              <h3 style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--secondary)', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>Tâm trạng</h3>
+              {topMoods.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {topMoods.map(([mood, count]) => (
+                    <div key={mood} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', background: 'var(--background)', padding: '6px 8px', borderRadius: '4px' }}>
+                      <span style={{ color: 'var(--text-main)' }}>{mood}</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{count} lần</span>
+                    </div>
+                  ))}
+                </div>
+              ) : <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Chưa có dữ liệu</span>}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dự đoán tiếp theo */}
       <div className="card">
