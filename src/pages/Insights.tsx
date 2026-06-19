@@ -10,6 +10,7 @@ const Insights = () => {
   const { viewingUid } = useAuth();
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cycleToDelete, setCycleToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -22,16 +23,17 @@ const Insights = () => {
     fetch();
   }, [viewingUid]);
 
-  const handleDeleteCycle = async (cycleId: string) => {
-    if (!viewingUid) return;
-    if (window.confirm('Bạn có chắc chắn muốn xóa chu kỳ này không?')) {
-      const success = await deleteCycle(viewingUid, cycleId);
-      if (success) {
-        setCycles(cycles.filter(c => c.id !== cycleId));
-      } else {
-        alert('Có lỗi xảy ra khi xóa!');
-      }
+  const handleDeleteCycle = (cycleId: string) => {
+    setCycleToDelete(cycleId);
+  };
+
+  const confirmDelete = async () => {
+    if (!viewingUid || !cycleToDelete) return;
+    const success = await deleteCycle(viewingUid, cycleToDelete);
+    if (success) {
+      setCycles(cycles.filter(c => c.id !== cycleToDelete));
     }
+    setCycleToDelete(null);
   };
 
   if (loading) {
@@ -208,6 +210,20 @@ const Insights = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal xác nhận xóa */}
+      {cycleToDelete && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '320px', textAlign: 'center', padding: '24px' }}>
+            <h3 style={{ margin: '0 0 12px 0' }}>Xác nhận xóa</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '0.9rem' }}>Bạn có chắc chắn muốn xóa chu kỳ này? Hành động này không thể hoàn tác.</p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => setCycleToDelete(null)} className="btn-secondary" style={{ flex: 1 }}>Hủy</button>
+              <button onClick={confirmDelete} className="btn-primary" style={{ flex: 1, background: 'var(--danger)' }}>Xóa</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
