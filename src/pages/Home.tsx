@@ -80,6 +80,25 @@ const Home = () => {
             <>
               <h2 style={{ fontSize: '3rem', margin: 0, color: 'var(--primary)' }}>{cycleDay}</h2>
               <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Ngày của chu kỳ</span>
+              
+              <div style={{ 
+                marginTop: '16px', 
+                background: getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' 
+                          : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'rgba(248, 165, 194, 0.3)' 
+                          : getPregnancyChance(new Date(), cycle) === 'Thấp' ? 'rgba(46, 204, 113, 0.2)' 
+                          : 'var(--primary)', 
+                padding: '6px 16px', 
+                borderRadius: '20px', 
+                fontSize: '0.85rem', 
+                fontWeight: 'bold', 
+                color: getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--text-main)'
+                     : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'var(--primary)' 
+                     : getPregnancyChance(new Date(), cycle) === 'Thấp' ? '#27ae60' 
+                     : '#fff',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+              }}>
+                Khả năng thụ thai: {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'Đỉnh điểm' : getPregnancyChance(new Date(), cycle)}
+              </div>
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '20px' }}>
