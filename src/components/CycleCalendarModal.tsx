@@ -1,19 +1,68 @@
 import { useState } from 'react';
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
-  startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths
+  startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths,
+  addDays, isWithinInterval
 } from 'date-fns';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Cycle } from '../services/firestore';
+import { calculateSmartPredictions } from '../utils/cycleCalculations';
 
 interface Props {
   onSave: (startDate: Date, endDate: Date) => void;
   onClose: () => void;
+  existingCycles: Cycle[];
 }
 
-const CycleCalendarModal = ({ onSave, onClose }: Props) => {
+// Dự đoán nhiều chu kỳ tương lai
+const predictFutureCycles = (cycles: Cycle[], count: number = 6) => {
+  if (cycles.length === 0) return [];
+  const pred = calculateSmartPredictions(cycles);
+  const avgLen = pred.averageCycleLength;
+  const avgPeriod = 5;
+
+  const sorted = [...cycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const lastStart = sorted[sorted.length - 1].startDate;
+
+  const future: { start: Date; end: Date; ovulation: Date }[] = [];
+  for (let i = 1; i <= count; i++) {
+    const start = addDays(lastStart, avgLen * i);
+    future.push({
+      start,
+      end: addDays(start, avgPeriod - 1),
+      ovulation: addDays(start, avgLen - 14),
+    });
+  }
+  return future;
+};
+
+const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDays, setSelectedDays] = useState<Date[]>([]);
   const [mode, setMode] = useState<'period' | 'start'>('period');
+
+  // Tính dữ liệu hiển thị lên lịch
+  const futurePredictions = existingCycles.length >= 1 ? predictFutureCycles(existingCycles) : [];
+
+  // Kiểm tra 1 ngày có thuộc kỳ kinh cũ đã nhập không
+  const getExistingStatus = (day: Date): 'period' | 'start' | 'predicted-period' | 'predicted-ovulation' | null => {
+    // Ngày bắt đầu kinh cũ
+    for (const c of existingCycles) {
+      if (isSameDay(day, c.startDate)) return 'start';
+      if (c.endDate && isWithinInterval(day, { start: c.startDate, end: c.endDate })) return 'period';
+      // Nếu không có endDate → mặc định 5 ngày
+      if (!c.endDate) {
+        const periodEnd = addDays(c.startDate, 4);
+        if (isWithinInterval(day, { start: c.startDate, end: periodEnd })) return 'period';
+      }
+    }
+    // Dự đoán tương lai
+    for (const f of futurePredictions) {
+      if (isSameDay(day, f.ovulation)) return 'predicted-ovulation';
+      if (isWithinInterval(day, { start: f.start, end: f.end })) return 'predicted-period';
+    }
+    return null;
+  };
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -40,6 +89,64 @@ const CycleCalendarModal = ({ onSave, onClose }: Props) => {
     onSave(start, end);
   };
 
+  // Style cho các trạng thái khác nhau
+  const getDayStyle = (day: Date, inMonth: boolean) => {
+    const selected = isSelected(day);
+    const isToday = isSameDay(day, new Date());
+    const status = getExistingStatus(day);
+
+    let background = 'transparent';
+    let color = inMonth ? 'var(--text-main)' : 'var(--text-muted)';
+    let border = 'none';
+    let fontWeight = 'normal';
+    let boxShadow = 'none';
+    let opacity = inMonth ? 1 : 0.3;
+
+    if (selected) {
+      background = 'var(--primary)';
+      color = '#fff';
+      fontWeight = 'bold';
+      boxShadow = '0 2px 8px rgba(155,89,182,0.4)';
+    } else if (status === 'start') {
+      background = '#e84393';
+      color = '#fff';
+      fontWeight = 'bold';
+      boxShadow = '0 2px 6px rgba(232,67,147,0.4)';
+    } else if (status === 'period') {
+      background = 'rgba(232,67,147,0.25)';
+      color = '#e84393';
+      fontWeight = '600';
+    } else if (status === 'predicted-period') {
+      background = 'rgba(155,89,182,0.15)';
+      color = 'var(--primary)';
+      border = '1px dashed var(--primary)';
+    } else if (status === 'predicted-ovulation') {
+      background = 'var(--secondary)';
+      color = '#333';
+      fontWeight = 'bold';
+      boxShadow = '0 0 6px var(--secondary)';
+    }
+
+    if (isToday && !selected) {
+      border = '2px solid var(--primary)';
+    }
+
+    return {
+      padding: '10px 0', borderRadius: '50%', cursor: inMonth ? 'pointer' : 'default',
+      background, color, border, fontWeight, boxShadow, opacity,
+      fontSize: '0.9rem', transition: 'all 0.15s',
+    };
+  };
+
+  // Chú thích dưới lịch
+  const legends = [
+    { color: '#e84393', label: 'Ngày bắt đầu kinh' },
+    { color: 'rgba(232,67,147,0.25)', label: 'Ngày hành kinh', border: '' },
+    { color: 'rgba(155,89,182,0.15)', label: 'Dự đoán kinh', border: '1px dashed var(--primary)' },
+    { color: 'var(--secondary)', label: 'Dự đoán rụng trứng' },
+    { color: 'var(--primary)', label: 'Đang chọn' },
+  ];
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
@@ -50,7 +157,7 @@ const CycleCalendarModal = ({ onSave, onClose }: Props) => {
         width: '100%', maxWidth: '480px',
         background: 'var(--background)',
         borderRadius: '24px 24px 0 0',
-        padding: '24px 24px 100px 24px', /* padding-bottom đủ để tránh thanh nav */
+        padding: '24px 24px 100px 24px',
         maxHeight: '92vh',
         overflowY: 'auto',
       }}>
@@ -113,33 +220,29 @@ const CycleCalendarModal = ({ onSave, onClose }: Props) => {
         </div>
 
         {/* Calendar grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '16px' }}>
           {days.map(day => {
-            const selected = isSelected(day);
             const inMonth = isSameMonth(day, monthStart);
-            const isToday = isSameDay(day, new Date());
             return (
               <button
                 key={day.toString()}
                 onClick={() => inMonth && toggleDay(day)}
-                style={{
-                  padding: '10px 0',
-                  borderRadius: '50%',
-                  border: isToday && !selected ? '2px solid var(--primary)' : 'none',
-                  background: selected ? 'var(--primary)' : 'transparent',
-                  color: selected ? '#fff' : inMonth ? 'var(--text-main)' : 'var(--text-muted)',
-                  opacity: inMonth ? 1 : 0.3,
-                  cursor: inMonth ? 'pointer' : 'default',
-                  fontWeight: selected ? 'bold' : 'normal',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.15s',
-                  boxShadow: selected ? '0 2px 8px rgba(155,89,182,0.4)' : 'none',
-                }}
+                style={getDayStyle(day, inMonth) as any}
               >
                 {format(day, 'd')}
               </button>
             );
           })}
+        </div>
+
+        {/* Legend */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+          {legends.map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              <div style={{ width: 14, height: 14, borderRadius: '50%', background: l.color, border: l.border || 'none', flexShrink: 0 }} />
+              {l.label}
+            </div>
+          ))}
         </div>
 
         {/* Selected summary */}

@@ -215,6 +215,7 @@ const Home = () => {
       <CycleCalendarModal
         onSave={handleAddHistory}
         onClose={() => setShowHistoryModal(false)}
+        existingCycles={allCycles}
       />
     )}
     </>
