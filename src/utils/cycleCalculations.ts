@@ -92,7 +92,7 @@ export const calculatePredictions = (
   const nextPeriodStart = addDays(lastPeriodStartDate, settings.averageCycleLength);
   const ovulationDate = subDays(nextPeriodStart, 14);
   const fertileWindowStart = subDays(ovulationDate, 5);
-  const fertileWindowEnd = ovulationDate;
+  const fertileWindowEnd = addDays(ovulationDate, 1);
   return { nextPeriodStart, ovulationDate, fertileWindowStart, fertileWindowEnd };
 };
 

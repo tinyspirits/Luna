@@ -211,6 +211,19 @@ const Insights = () => {
         </div>
       </div>
 
+      {/* Kiến thức sức khỏe */}
+      <div className="card" style={{ marginTop: '20px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CheckCircle size={20} color="var(--primary)" />
+          Góc Kiến Thức
+        </h2>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+          <p><strong>Ngày rụng trứng:</strong> Thường xảy ra vào <strong>ngày thứ 14 trước kỳ kinh tiếp theo</strong>. Cơ thể chỉ rụng trứng 1 lần duy nhất trong mỗi chu kỳ.</p>
+          <p style={{ marginTop: '8px' }}><strong>Cửa sổ thụ thai:</strong> Tinh trùng sống được tới 5 ngày, còn trứng chỉ sống 12-24h. Vì vậy, "cửa sổ thụ thai" bắt đầu từ <strong>5 ngày trước rụng trứng</strong> và khép lại ngay sau ngày trứng rụng 1 ngày.</p>
+          <p style={{ marginTop: '8px' }}><strong>Dấu hiệu nhận biết:</strong> Để xác định chính xác nhất, bạn có thể dựa vào que thử rụng trứng, thân nhiệt (BBT tăng nhẹ sau khi rụng) hoặc dịch nhầy cổ tử cung (chất dịch trong, dai như lòng trắng trứng sống là lúc dễ thụ thai nhất).</p>
+        </div>
+      </div>
+
       {/* Modal xác nhận xóa */}
       {cycleToDelete && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
