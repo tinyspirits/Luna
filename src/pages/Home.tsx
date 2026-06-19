@@ -18,6 +18,7 @@ const Home = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekOffset, setWeekOffset] = useState(0);
+  const [showTrendInfo, setShowTrendInfo] = useState(false);
 
   // Swipe gesture state for day strip
   const touchStartX = useRef<number | null>(null);
@@ -807,9 +808,38 @@ const Home = () => {
               </svg>
             </div>
 
-            <p className="cycle-trend-description">
-              Biểu đồ theo dõi xu hướng độ dài chu kỳ gần đây. Điểm lệch ≥{ABNORMAL_THRESHOLD} ngày so với trung bình được đánh dấu bất thường.
-            </p>
+            <div style={{ marginTop: '16px', background: 'var(--surface)', borderRadius: '12px', padding: '16px', border: '1px solid var(--border)' }}>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontWeight: 'bold' }}
+                onClick={() => setShowTrendInfo(!showTrendInfo)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Info size={18} color="var(--primary)" />
+                  <span>Tìm hiểu về Biểu đồ xu hướng</span>
+                </div>
+                {showTrendInfo ? <ChevronLeft style={{ transform: 'rotate(90deg)' }} size={18} /> : <ChevronRight style={{ transform: 'rotate(90deg)' }} size={18} />}
+              </div>
+              
+              {showTrendInfo && (
+                <div className="animate-fade-in" style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.6' }}>
+                  <p style={{ marginBottom: '12px' }}>
+                    Biểu đồ xu hướng chu kỳ là một "bảng điều khiển sức khỏe", giúp nhận diện quy luật sinh học của cơ thể. Điểm lệch ≥{ABNORMAL_THRESHOLD} ngày so với trung bình sẽ được đánh dấu bất thường.
+                  </p>
+                  
+                  <h4 style={{ margin: '16px 0 4px', color: 'var(--primary)', fontSize: '0.95rem' }}>1. Trực quan hóa dữ liệu</h4>
+                  <p style={{ color: 'var(--text-muted)' }}>Theo dõi độ dài chu kỳ và số ngày hành kinh qua từng tháng, giúp dễ dàng nhìn thấy chu kỳ của mình đang ổn định hay dao động.</p>
+                  
+                  <h4 style={{ margin: '16px 0 4px', color: 'var(--primary)', fontSize: '0.95rem' }}>2. Cảnh báo sức khỏe (Anomaly Detection)</h4>
+                  <p style={{ color: 'var(--text-muted)' }}>Nhận diện ngay lập tức sự không đều: các chu kỳ quá dài (trên 35 ngày), quá ngắn (dưới 21 ngày). Đây là manh mối sớm cho các vấn đề như mất cân bằng nội tiết, PCOS, tuyến giáp, căng thẳng hoặc thay đổi cân nặng.</p>
+
+                  <h4 style={{ margin: '16px 0 4px', color: 'var(--primary)', fontSize: '0.95rem' }}>3. Nâng cao độ chính xác dự đoán</h4>
+                  <p style={{ color: 'var(--text-muted)' }}>Dữ liệu lịch sử là "nguồn thức ăn" cho AI. Càng ghi nhận nhiều chu kỳ, thuật toán càng hiểu rõ quy luật cá nhân của bạn, từ đó dự báo tương lai chính xác hơn.</p>
+
+                  <h4 style={{ margin: '16px 0 4px', color: 'var(--primary)', fontSize: '0.95rem' }}>4. Báo cáo Y tế chuyên nghiệp</h4>
+                  <p style={{ color: 'var(--text-muted)' }}>Khi thăm khám bác sĩ, dữ liệu trực quan này cung cấp một bệnh sử y khoa rõ ràng, hỗ trợ chẩn đoán nhanh và chuẩn xác hơn thay vì phải tường thuật bằng trí nhớ.</p>
+                </div>
+              )}
+            </div>
           </div>
         );
       })()}
