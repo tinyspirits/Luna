@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays, isSameMonth, isWithinInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { getLatestCycle } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
+import { getPregnancyChance } from '../utils/cycleCalculations';
 import { useAuth } from '../contexts/AuthContext';
 
 const CalendarPage = () => {
@@ -56,22 +57,25 @@ const CalendarPage = () => {
           ))}
           
           {days.map(day => {
-            let isBleeding = false;
-            let isOvulation = false;
+            let chance = 'Chưa rõ';
 
             if (cycle) {
-              isBleeding = isWithinInterval(day, { start: cycle.expectedNextPeriod, end: addDays(cycle.expectedNextPeriod, 4) });
-              isOvulation = isSameDay(day, cycle.expectedOvulation);
+              chance = getPregnancyChance(day, cycle);
             }
+
+            const isPeriod = chance === 'Đang Hành Kinh';
+            const isOvulation = chance === 'Trứng rụng';
+            const isFertile = chance === 'Cao';
+            const isSafe = chance === 'Thấp';
 
             return (
               <div 
                 key={day.toString()} 
-                className={`calendar-cell ${!isSameMonth(day, monthStart) ? 'disabled' : ''} ${isSameDay(day, new Date()) ? 'today' : ''} ${isBleeding ? 'period' : ''} ${isOvulation ? 'ovulation' : ''}`}
+                className={`calendar-cell ${!isSameMonth(day, monthStart) ? 'disabled' : ''} ${isSameDay(day, new Date()) ? 'today' : ''} ${isPeriod ? 'period' : ''} ${isOvulation ? 'ovulation' : ''} ${isFertile ? 'fertile' : ''} ${isSafe ? 'safe' : ''}`}
                 style={{ position: 'relative', padding: '10px 0' }}
               >
                 {format(day, 'd')}
-                {isBleeding && <span style={{ position: 'absolute', bottom: '2px', right: '2px', fontSize: '0.7rem' }}>{profile?.periodIcon || '🩸'}</span>}
+                {isPeriod && <span style={{ position: 'absolute', bottom: '2px', right: '2px', fontSize: '0.7rem' }}>{profile?.periodIcon || '🩸'}</span>}
               </div>
             );
           })}
@@ -79,13 +83,16 @@ const CalendarPage = () => {
         
         <div style={{ marginTop: '20px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--primary)' }}></div> Ngày có kinh (Bắt đầu)
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--primary)' }}></div> Ngày có kinh / Hành kinh
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--primary-light)' }}></div> Ngày có kinh dự kiến
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 5px var(--secondary)' }}></div> Ngày rụng trứng (Tỉ lệ mang thai ĐỈNH ĐIỂM)
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(248, 165, 194, 0.5)', border: '1px dashed var(--secondary)' }}></div> Cửa sổ thụ thai (Tỉ lệ mang thai CAO)
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--secondary)' }}></div> Ngày rụng trứng dự kiến
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(46, 204, 113, 0.4)' }}></div> Ngày an toàn (Tỉ lệ mang thai THẤP)
           </div>
         </div>
       </div>

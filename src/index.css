@@ -196,6 +196,17 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 .calendar-cell.ovulation {
   background: var(--secondary);
   color: var(--text-main);
+  box-shadow: 0 0 10px var(--secondary);
+  font-weight: bold;
+}
+
+.calendar-cell.fertile {
+  background: rgba(248, 165, 194, 0.3); /* Nhấn nhẹ bằng màu hồng */
+  border: 1px dashed var(--secondary);
+}
+
+.calendar-cell.safe {
+  background: rgba(46, 204, 113, 0.15); /* Màu xanh nhạt tượng trưng cho an toàn */
 }
 
 /* Animations */

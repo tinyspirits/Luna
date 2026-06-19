@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
-import { getCycleDay } from '../utils/cycleCalculations';
+import { getCycleDay, getPregnancyChance } from '../utils/cycleCalculations';
 import { useAuth } from '../contexts/AuthContext';
 
 const Home = () => {
@@ -131,8 +131,22 @@ const Home = () => {
       </div>
 
       <div className="card">
-        <h2>Thông tin hôm nay</h2>
-        <p>Bạn đang ở trong giai đoạn nang noãn. Bạn có thể cảm thấy tràn đầy năng lượng hơn. Đây là thời điểm tuyệt vời để tập thể dục!</p>
+        <h2>Tình trạng hôm nay</h2>
+        {cycle ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--surface)', borderLeft: `4px solid ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' : getPregnancyChance(new Date(), cycle) === 'Cao' ? '#f8a5c2' : '#2ecc71'}` }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Tỉ lệ thụ thai: <span style={{ color: 'var(--primary)' }}>{getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'Đỉnh điểm' : getPregnancyChance(new Date(), cycle)}</span></h3>
+              <p style={{ marginTop: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' && 'Hôm nay là ngày rụng trứng! Khả năng thụ thai đạt đỉnh điểm. Nếu không muốn có thai, hãy sử dụng biện pháp tránh thai an toàn.'}
+                {getPregnancyChance(new Date(), cycle) === 'Cao' && 'Bạn đang trong cửa sổ thụ thai (khoảng thời gian dễ mang thai nhất trong tháng). Hãy lưu ý nhé!'}
+                {getPregnancyChance(new Date(), cycle) === 'Thấp' && 'Hôm nay là ngày an toàn. Tỉ lệ mang thai rất thấp, cơ thể đang ở trạng thái ổn định.'}
+                {getPregnancyChance(new Date(), cycle) === 'Đang Hành Kinh' && 'Đang trong kỳ kinh nguyệt. Hãy giữ ấm cơ thể và nghỉ ngơi nhiều hơn.'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p>Hãy bắt đầu chu kỳ để xem các phân tích chi tiết nhé!</p>
+        )}
       </div>
     </div>
   );
