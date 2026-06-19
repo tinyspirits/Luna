@@ -180,8 +180,12 @@ const Home = () => {
   }
 
   // Check if partner tab should be shown:
-  // Only show when: user has partner AND user is NOT male AND partner is female
-  const showPartnerTab = !!(profile?.partnerUid && profile?.gender !== 'male' && profile?.partnerGender === 'female');
+  // Female + Female partner: show toggle tab (can view both)
+  // Male + Female partner: NO tab, always show partner data (handled by AuthContext)
+  const showPartnerTab = !!(profile?.partnerUid && profile?.gender === 'female' && profile?.partnerGender === 'female');
+
+  // Whether user is in read-only mode (viewing partner's data or is male)
+  const isReadOnly = isMale || usePartnerData;
 
   // Get daily insight text based on pregnancy chance
   const getDailyTip = (chance: string) => {
@@ -293,8 +297,15 @@ const Home = () => {
       </div>
 
       {/* Main Heading */}
-      <h1>{isMale && profile?.partnerUid ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : (usePartnerData ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : 'Chào buổi sáng 👋')}</h1>
-      <p style={{ marginBottom: '24px' }}>Hôm nay cơ thể {isMale || usePartnerData ? (profile?.partnerName || 'người ấy') : 'bạn'} cảm thấy thế nào?</p>
+      <h1>{isReadOnly ? `Chu kỳ của ${profile?.partnerName || 'bạn đời'} 👋` : 'Chào buổi sáng 👋'}</h1>
+      <p style={{ marginBottom: '24px' }}>
+        {isMale 
+          ? `Theo dõi chu kỳ của ${profile?.partnerName || 'cô ấy'} tại đây`
+          : usePartnerData 
+            ? `Đang xem chu kỳ của ${profile?.partnerName || 'bạn đời'}`
+            : 'Hôm nay cơ thể bạn cảm thấy thế nào?'
+        }
+      </p>
 
       {/* Main Circle with Ovulation Countdown */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
@@ -437,7 +448,7 @@ const Home = () => {
           const len = differenceInDays(sortedCycles[i].startDate, sortedCycles[i - 1].startDate);
           if (len > 15 && len < 60) {
             cycleLengths.push({
-              label: format(sortedCycles[i - 1].startDate, "d 'thg' M", { locale: vi }),
+              label: format(sortedCycles[i - 1].startDate, 'd/M'),
               length: len,
               startDate: sortedCycles[i - 1].startDate,
             });
@@ -448,137 +459,156 @@ const Home = () => {
         const currentLen = differenceInDays(today, lastCycle.startDate);
         if (currentLen > 0) {
           cycleLengths.push({
-            label: 'Hiện tại',
+            label: 'Nay',
             length: currentLen,
             startDate: lastCycle.startDate,
           });
         }
 
-        if (cycleLengths.length < 2) return null;
+        // Show max 6 recent cycles for cleaner display
+        const displayCycles = cycleLengths.slice(-6);
+        if (displayCycles.length < 2) return null;
 
         const avgLen = smartPred?.averageCycleLength ?? 28;
-        const minLen = Math.min(...cycleLengths.map(c => c.length));
-        const maxLen = Math.max(...cycleLengths.map(c => c.length));
-        const range = Math.max(maxLen - minLen, 8);
-        const paddedMin = minLen - 2;
-        const paddedRange = range + 4;
+        const minLen = Math.min(...displayCycles.map(c => c.length));
+        const maxLen = Math.max(...displayCycles.map(c => c.length));
+        const range = Math.max(maxLen - minLen, 6);
+        const paddedMin = minLen - 3;
+        const paddedRange = range + 6;
 
-        // SVG dimensions
-        const svgWidth = 320;
-        const svgHeight = 140;
-        const padX = 30;
-        const padY = 20;
+        // SVG dimensions - larger for better readability
+        const svgWidth = 340;
+        const svgHeight = 180;
+        const padX = 20;
+        const padTop = 30;
+        const padBottom = 28;
         const chartW = svgWidth - padX * 2;
-        const chartH = svgHeight - padY * 2;
+        const chartH = svgHeight - padTop - padBottom;
 
-        const points = cycleLengths.map((c, i) => {
-          const x = padX + (i / (cycleLengths.length - 1)) * chartW;
-          const y = padY + chartH - ((c.length - paddedMin) / paddedRange) * chartH;
+        const points = displayCycles.map((c, i) => {
+          const x = padX + (i / (displayCycles.length - 1)) * chartW;
+          const y = padTop + chartH - ((c.length - paddedMin) / paddedRange) * chartH;
           return { x, y, ...c };
         });
 
         // Create smooth curve path
-        const pathD = points.length > 1 
-          ? points.reduce((acc, pt, i) => {
-              if (i === 0) return `M ${pt.x} ${pt.y}`;
-              const prev = points[i - 1];
-              const cpx1 = prev.x + (pt.x - prev.x) * 0.4;
-              const cpx2 = pt.x - (pt.x - prev.x) * 0.4;
-              return `${acc} C ${cpx1} ${prev.y} ${cpx2} ${pt.y} ${pt.x} ${pt.y}`;
-            }, '')
-          : '';
+        const pathD = points.reduce((acc, pt, i) => {
+          if (i === 0) return `M ${pt.x} ${pt.y}`;
+          const prev = points[i - 1];
+          const cpx1 = prev.x + (pt.x - prev.x) * 0.35;
+          const cpx2 = pt.x - (pt.x - prev.x) * 0.35;
+          return `${acc} C ${cpx1} ${prev.y} ${cpx2} ${pt.y} ${pt.x} ${pt.y}`;
+        }, '');
 
         // Average line Y
-        const avgY = padY + chartH - ((avgLen - paddedMin) / paddedRange) * chartH;
-
-        // Determine abnormal points (>= 7 days deviation from average)
-        const ABNORMAL_THRESHOLD = 7;
+        const avgY = padTop + chartH - ((avgLen - paddedMin) / paddedRange) * chartH;
+        const ABNORMAL_THRESHOLD = 5;
 
         return (
           <div className="card cycle-trend-card">
             <div className="cycle-trend-header">
-              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                Xu hướng chu kỳ
-              </h2>
-              <Info size={16} style={{ color: 'var(--text-muted)' }} />
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Xu hướng chu kỳ</h2>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {cycleLengths.length} chu kỳ · TB {avgLen} ngày
+                </span>
+              </div>
+              <Info size={18} style={{ color: 'var(--text-muted)', opacity: 0.6 }} />
             </div>
             
             <div className="cycle-trend-chart">
               <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="xMidYMid meet" width="100%">
-                {/* Grid lines */}
-                {[0, 0.25, 0.5, 0.75, 1].map((frac, i) => {
-                  const gy = padY + chartH * (1 - frac);
-                  return (
-                    <line key={i} x1={padX} y1={gy} x2={svgWidth - padX} y2={gy}
-                      stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" />
-                  );
-                })}
-
-                {/* Average line */}
-                <line x1={padX} y1={avgY} x2={svgWidth - padX} y2={avgY}
-                  stroke="var(--primary)" strokeWidth="1" strokeDasharray="6,3" opacity="0.5" />
-                <text x={svgWidth - padX + 4} y={avgY + 3} fontSize="8" fill="var(--primary)" opacity="0.7">
-                  TB
-                </text>
-
-                {/* Area fill under curve */}
-                {points.length > 1 && (
-                  <path
-                    d={`${pathD} L ${points[points.length - 1].x} ${padY + chartH} L ${points[0].x} ${padY + chartH} Z`}
-                    fill="url(#trendGradient)"
-                    opacity="0.3"
-                  />
-                )}
-
-                {/* Gradient definition */}
                 <defs>
                   <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.02" />
+                    <stop offset="0%" stopColor="#e84393" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#e84393" stopOpacity="0.02" />
+                  </linearGradient>
+                  <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#e84393" />
+                    <stop offset="50%" stopColor="#f8a5c2" />
+                    <stop offset="100%" stopColor="#e84393" />
                   </linearGradient>
                 </defs>
 
-                {/* Smooth curve line */}
-                <path d={pathD} fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-
-                {/* Data points */}
-                {points.map((pt, i) => {
-                  const isAbnormal = Math.abs(pt.length - avgLen) >= ABNORMAL_THRESHOLD;
+                {/* Subtle grid lines */}
+                {[0, 0.5, 1].map((frac, i) => {
+                  const gy = padTop + chartH * (1 - frac);
                   return (
-                    <g key={i}>
-                      {/* Abnormal glow */}
-                      {isAbnormal && (
-                        <>
-                          <circle cx={pt.x} cy={pt.y} r="12" fill={pt.length > avgLen ? 'rgba(232,67,147,0.15)' : 'rgba(253,203,110,0.2)'} />
-                          <circle cx={pt.x} cy={pt.y} r="8" fill={pt.length > avgLen ? 'rgba(232,67,147,0.25)' : 'rgba(253,203,110,0.35)'} />
-                        </>
-                      )}
-                      <circle cx={pt.x} cy={pt.y} r={isAbnormal ? '5.5' : '4'}
-                        fill={isAbnormal ? (pt.length > avgLen ? '#e84393' : '#fbc531') : 'var(--text-muted)'}
-                        stroke="white" strokeWidth="2" />
-                      {/* Abnormal label */}
-                      {isAbnormal && (
-                        <text x={pt.x} y={pt.y + (pt.length > avgLen ? -16 : 18)} 
-                          textAnchor="middle" fontSize="8" fontWeight="700"
-                          fill={pt.length > avgLen ? '#e84393' : '#d4850e'}>
-                          BẤT THƯỜNG
-                        </text>
-                      )}
-                    </g>
+                    <line key={i} x1={padX} y1={gy} x2={svgWidth - padX} y2={gy}
+                      stroke="var(--border)" strokeWidth="0.5" strokeDasharray="4,4" opacity="0.5" />
                   );
                 })}
 
-                {/* X-axis labels */}
-                {points.map((pt, i) => (
-                  <text key={i} x={pt.x} y={svgHeight - 2} textAnchor="middle" fontSize="7" fill="var(--text-muted)">
-                    {pt.label.length > 8 ? pt.label.substring(0, 8) : pt.label}
-                  </text>
-                ))}
+                {/* Average reference line */}
+                {avgY > padTop && avgY < padTop + chartH && (
+                  <>
+                    <line x1={padX} y1={avgY} x2={svgWidth - padX} y2={avgY}
+                      stroke="var(--primary)" strokeWidth="1.2" strokeDasharray="8,4" opacity="0.4" />
+                    <rect x={svgWidth - padX - 32} y={avgY - 10} width="36" height="16" rx="4"
+                      fill="var(--primary)" opacity="0.15" />
+                    <text x={svgWidth - padX - 14} y={avgY + 1} textAnchor="middle" fontSize="8" fontWeight="600" fill="var(--primary)" opacity="0.8">
+                      TB {avgLen}
+                    </text>
+                  </>
+                )}
+
+                {/* Area fill under curve */}
+                <path
+                  d={`${pathD} L ${points[points.length - 1].x} ${padTop + chartH} L ${points[0].x} ${padTop + chartH} Z`}
+                  fill="url(#trendGradient)"
+                />
+
+                {/* Main curve line with gradient */}
+                <path d={pathD} fill="none" stroke="url(#lineGradient)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                {/* Data points and labels */}
+                {points.map((pt, i) => {
+                  const isAbnormal = Math.abs(pt.length - avgLen) >= ABNORMAL_THRESHOLD;
+                  const isHigh = pt.length > avgLen;
+                  return (
+                    <g key={i}>
+                      {/* Abnormal glow ring */}
+                      {isAbnormal && (
+                        <circle cx={pt.x} cy={pt.y} r="14"
+                          fill={isHigh ? 'rgba(232,67,147,0.12)' : 'rgba(253,203,110,0.18)'}
+                        />
+                      )}
+                      
+                      {/* Point */}
+                      <circle cx={pt.x} cy={pt.y} r={isAbnormal ? '5' : '4'}
+                        fill={isAbnormal ? (isHigh ? '#e84393' : '#fbc531') : '#f8a5c2'}
+                        stroke="white" strokeWidth="2"
+                      />
+                      
+                      {/* Cycle length number above point */}
+                      <text x={pt.x} y={pt.y - (isAbnormal ? 20 : 12)}
+                        textAnchor="middle" fontSize={isAbnormal ? '10' : '9'} 
+                        fontWeight={isAbnormal ? '800' : '600'}
+                        fill={isAbnormal ? (isHigh ? '#e84393' : '#d4850e') : 'var(--text-main)'}>
+                        {pt.length}
+                      </text>
+
+                      {/* Abnormal label below number */}
+                      {isAbnormal && (
+                        <text x={pt.x} y={pt.y - (isHigh ? 30 : 30)}
+                          textAnchor="middle" fontSize="6.5" fontWeight="700" letterSpacing="0.5"
+                          fill={isHigh ? '#e84393' : '#d4850e'} opacity="0.85">
+                          BẤT THƯỜNG
+                        </text>
+                      )}
+
+                      {/* X-axis label */}
+                      <text x={pt.x} y={svgHeight - 6} textAnchor="middle" fontSize="9" fill="var(--text-muted)" fontWeight="500">
+                        {pt.label}
+                      </text>
+                    </g>
+                  );
+                })}
               </svg>
             </div>
 
             <p className="cycle-trend-description">
-              Biểu đồ cho thấy xu hướng độ dài chu kỳ của bạn. Các điểm bất thường được đánh dấu để bạn theo dõi.
+              Biểu đồ theo dõi xu hướng độ dài chu kỳ gần đây. Điểm lệch ≥{ABNORMAL_THRESHOLD} ngày so với trung bình được đánh dấu bất thường.
             </p>
           </div>
         );
@@ -608,9 +638,35 @@ const Home = () => {
       {/* Quick Actions */}
       <div className="card">
         <h2>Thao tác nhanh</h2>
-        {usePartnerData ? (
-          <p>Bạn đang ở chế độ xem. Không thể chỉnh sửa dữ liệu của bạn đời.</p>
+        {isMale ? (
+          /* Nam: chỉ xem, không cần cập nhật kỳ kinh */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {cycle ? (
+              <>
+                <p><strong>Kỳ kinh tiếp theo:</strong> {cycle.expectedNextPeriod.toLocaleDateString()}</p>
+                <p><strong>Ngày rụng trứng:</strong> {cycle.expectedOvulation.toLocaleDateString()}</p>
+              </>
+            ) : (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center' }}>
+                {profile?.partnerName || 'Bạn đời'} chưa có dữ liệu chu kỳ nào.
+              </p>
+            )}
+          </div>
+        ) : usePartnerData ? (
+          /* Nữ đang xem bạn đời nữ: read-only */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              🔒 Đang xem chu kỳ của {profile?.partnerName || 'bạn đời'}. Chỉ {profile?.partnerName || 'bạn đời'} mới có thể cập nhật dữ liệu.
+            </p>
+            {cycle && (
+              <>
+                <p><strong>Kỳ kinh tiếp theo:</strong> {cycle.expectedNextPeriod.toLocaleDateString()}</p>
+                <p><strong>Ngày rụng trứng:</strong> {cycle.expectedOvulation.toLocaleDateString()}</p>
+              </>
+            )}
+          </div>
         ) : (
+          /* Nữ xem dữ liệu của mình: có thể chỉnh sửa */
           <>
             {!cycle ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
