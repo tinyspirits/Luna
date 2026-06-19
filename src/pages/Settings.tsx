@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { linkPartner, updateUserProfile } from '../services/firestore';
+import { linkPartner, updateUserProfile, unlinkPartner } from '../services/firestore';
 import { UploadCloud } from 'lucide-react';
 
 const PRESET_BGS = [
@@ -21,6 +21,7 @@ const Settings = () => {
   const [linking, setLinking] = useState(false);
   const [savingTheme, setSavingTheme] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -41,6 +42,20 @@ const Settings = () => {
       alert('Có lỗi xảy ra khi kết nối. Vui lòng thử lại.');
     }
     setLinking(false);
+  };
+
+  const handleUnlinkPartner = async () => {
+    if (!currentUser || !profile?.partnerUid) return;
+    setLinking(true);
+    const success = await unlinkPartner(currentUser.uid, profile.partnerUid);
+    if (success) {
+      await reloadProfile();
+      alert('Đã hủy kết nối thành công!');
+    } else {
+      alert('Có lỗi xảy ra khi hủy kết nối.');
+    }
+    setLinking(false);
+    setShowUnlinkConfirm(false);
   };
 
   const handleUpdateTheme = async (bg: string, icon: string) => {
@@ -125,7 +140,17 @@ const Settings = () => {
         </div>
 
         {profile?.partnerUid ? (
-          <p style={{ color: 'var(--secondary)', fontWeight: 600 }}>✅ Đã kết nối với {profile.partnerName || 'bạn đời'} ({profile.partnerUid.substring(0, 8)}...)</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(46, 204, 113, 0.1)', padding: '12px', borderRadius: '8px', border: '1px solid #27ae60' }}>
+            <p style={{ color: '#27ae60', fontWeight: 600, margin: 0 }}>✅ Đã kết nối: {profile.partnerName || 'bạn đời'} ({profile.partnerUid.substring(0, 8)}...)</p>
+            <button 
+              onClick={() => setShowUnlinkConfirm(true)} 
+              className="btn-secondary" 
+              style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}
+              disabled={linking}
+            >
+              Hủy
+            </button>
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <input
@@ -229,6 +254,22 @@ const Settings = () => {
         <p>Phiên bản: 1.0.0</p>
         <p>Bản quyền thuộc về Luna App.</p>
       </div>
+
+      {/* Modal xác nhận hủy kết nối */}
+      {showUnlinkConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '320px', textAlign: 'center', padding: '24px' }}>
+            <h3 style={{ margin: '0 0 12px 0' }}>Hủy kết nối?</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '0.9rem' }}>Bạn và người ấy sẽ không thể xem chu kỳ của nhau nữa. Bạn có chắc chắn không?</p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => setShowUnlinkConfirm(false)} className="btn-secondary" style={{ flex: 1 }}>Không</button>
+              <button onClick={handleUnlinkPartner} className="btn-primary" style={{ flex: 1, background: 'var(--danger)' }} disabled={linking}>
+                {linking ? 'Đang hủy...' : 'Hủy kết nối'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

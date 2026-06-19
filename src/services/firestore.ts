@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, limit, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, limit, deleteDoc, deleteField } from 'firebase/firestore';
 import { db } from '../firebase';
 import { calculatePredictions } from '../utils/cycleCalculations';
 import type { UserSettings } from '../utils/cycleCalculations';
@@ -71,6 +71,22 @@ export const linkPartner = async (userId: string, partnerUid: string, partnerNam
     return true;
   } catch (error) {
     console.error("Error linking partner:", error);
+    return false;
+  }
+};
+
+export const unlinkPartner = async (userId: string, partnerUid: string) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, { partnerUid: deleteField(), partnerName: deleteField() }, { merge: true });
+    
+    // Two-way connection: unlink the partner as well
+    const partnerRef = doc(db, 'users', partnerUid);
+    await setDoc(partnerRef, { partnerUid: deleteField(), partnerName: deleteField() }, { merge: true });
+    
+    return true;
+  } catch (error) {
+    console.error("Error unlinking partner:", error);
     return false;
   }
 };
