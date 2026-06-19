@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
-import { getCycleDay, getGlobalPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
+import { getCycleDay, getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
 import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
@@ -221,7 +221,7 @@ const Home = () => {
   }
 
   const today = new Date();
-  const cycleDay = cycle ? getCycleDay(cycle.startDate, selectedDate) : 0;
+  const cycleDay = (cycle && allCycles.length > 0) ? getGlobalCycleDay(selectedDate, allCycles) : 0;
   const cycleDayToday = cycle ? getCycleDay(cycle.startDate, today) : 0;
   const smartPred = allCycles.length > 0 ? calculateSmartPredictions(allCycles) : null;
   const daysUntilPeriod = smartPred?.daysUntilNextPeriod ?? (cycle ? Math.max(0, 28 - cycleDayToday) : null);
@@ -247,7 +247,8 @@ const Home = () => {
   // Get marker class for day strip
   const getMarkerClass = (chance: string) => {
     switch (chance) {
-      case 'Đang Hành Kinh': return 'period';
+      case 'Đang Hành Kinh': 
+      case 'Dự đoán hành kinh': return 'period';
       case 'Trứng rụng': return 'ovulation';
       case 'Cao': return 'fertile';
       case 'Thấp': return 'low';
@@ -292,7 +293,8 @@ const Home = () => {
       case 'Cao':
         return 'Đang trong cửa sổ thụ thai. Hormone estrogen tăng cao, tâm trạng thường tốt hơn.';
       case 'Đang Hành Kinh':
-        return 'Cơ thể đang hành kinh. Nên uống nhiều nước ấm, nghỉ ngơi và bổ sung sắt.';
+      case 'Dự đoán hành kinh':
+        return 'Cơ thể đang hành kinh (hoặc dự kiến hành kinh). Nên uống nhiều nước ấm, nghỉ ngơi và bổ sung sắt.';
       case 'Thấp':
         return 'Giai đoạn tỉ lệ thụ thai thấp. Cơ thể đang chuẩn bị cho pha hoàng thể.';
       case 'An toàn':
@@ -309,6 +311,7 @@ const Home = () => {
       case 'Cao':
         return 'Có thể thấy dịch nhầy nhiều hơn, tâm trạng phấn chấn, năng lượng cao.';
       case 'Đang Hành Kinh':
+      case 'Dự đoán hành kinh':
         return 'Đau bụng kinh, mệt mỏi, đau lưng, thay đổi tâm trạng là bình thường.';
       case 'Thấp':
         return 'Có thể xuất hiện mụn, chướng bụng nhẹ, tâm trạng thay đổi.';
@@ -500,7 +503,9 @@ const Home = () => {
                      : selectedChance === 'An toàn' ? '#27ae60' 
                      : '#e84393'
               }}>
-                Thụ thai: {selectedChance === 'Trứng rụng' ? 'Đỉnh điểm' : selectedChance}
+                {selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh' 
+                  ? selectedChance 
+                  : `Thụ thai: ${selectedChance === 'Trứng rụng' ? 'Đỉnh điểm' : selectedChance}`}
               </div>
             </>
           ) : (

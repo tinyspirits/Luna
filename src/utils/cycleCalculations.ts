@@ -100,7 +100,33 @@ export const getCycleDay = (lastPeriodStartDate: Date, currentDate: Date) => {
   return differenceInDays(currentDate, lastPeriodStartDate) + 1;
 };
 
-export type PregnancyChance = 'Trứng rụng' | 'Cao' | 'Thấp' | 'An toàn' | 'Đang Hành Kinh' | 'Chưa rõ';
+export const getGlobalCycleDay = (currentDate: Date, cycles: Cycle[]): number => {
+  if (cycles.length === 0) return 0;
+  
+  const sorted = [...cycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  let latestStart = sorted[sorted.length - 1].startDate;
+  
+  if (currentDate < latestStart) {
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      if (currentDate >= sorted[i].startDate) {
+        return differenceInDays(currentDate, sorted[i].startDate) + 1;
+      }
+    }
+    return differenceInDays(currentDate, sorted[0].startDate) + 1;
+  }
+  
+  const future = predictFutureCycles(cycles, 12);
+  for (let i = future.length - 1; i >= 0; i--) {
+    if (currentDate >= future[i].start) {
+      latestStart = future[i].start;
+      break;
+    }
+  }
+  
+  return differenceInDays(currentDate, latestStart) + 1;
+};
+
+export type PregnancyChance = 'Trứng rụng' | 'Cao' | 'Thấp' | 'An toàn' | 'Đang Hành Kinh' | 'Dự đoán hành kinh' | 'Chưa rõ';
 
 export const predictFutureCycles = (cycles: Cycle[], count: number = 6) => {
   if (cycles.length === 0) return [];
@@ -149,7 +175,7 @@ export const getGlobalPregnancyChance = (currentDate: Date, cycles: Cycle[]): Pr
       start: f.start,
       end: f.end
     });
-    if (isBleeding) return 'Đang Hành Kinh';
+    if (isBleeding) return 'Dự đoán hành kinh';
 
     const isOvulation = isSameDay(currentDate, f.ovulation);
     if (isOvulation) return 'Trứng rụng';
