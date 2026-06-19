@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { saveDailyLog, getDailyLog } from '../services/firestore';
+import { saveDailyLog, getDailyLog, getAllDailyLogs } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
-import DatePicker from '../components/DatePicker';
+import LogCalendar from '../components/LogCalendar';
 import { format } from 'date-fns';
 
 const symptomsList = [
@@ -31,6 +31,16 @@ const Log = () => {
   const [mood, setMood] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [allLogs, setAllLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      if (!viewingUid) return;
+      const logs = await getAllDailyLogs(viewingUid);
+      setAllLogs(logs);
+    };
+    fetchAll();
+  }, [viewingUid]);
 
   useEffect(() => {
     const fetchLog = async () => {
@@ -73,6 +83,24 @@ const Log = () => {
       discharge,
     } as any);
     setSaving(false);
+    // Cập nhật lại allLogs để chấm đỏ xuất hiện ngay lập tức
+    const newLog = {
+      date: new Date(date),
+      bleeding,
+      symptoms,
+      mood,
+      notes,
+      discharge,
+    };
+    setAllLogs(prev => {
+      const idx = prev.findIndex(l => format(l.date, 'yyyy-MM-dd') === date);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = newLog;
+        return updated;
+      }
+      return [...prev, newLog];
+    });
     alert('Đã lưu thông tin thành công!');
   };
 
@@ -92,9 +120,8 @@ const Log = () => {
     <div className="animate-fade-in">
       <h1>Ghi chép hằng ngày {usePartnerData && '(Chế độ xem Bạn đời)'}</h1>
 
-      <div className="card">
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Ngày</label>
-        <DatePicker value={date} onChange={setDate} />
+      <div style={{ marginBottom: '24px' }}>
+        <LogCalendar value={date} onChange={setDate} logs={allLogs} />
       </div>
 
       {usePartnerData ? (
