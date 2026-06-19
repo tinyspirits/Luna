@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,18 +27,6 @@ const Auth = () => {
       setError('Lỗi kết nối. Vui lòng thử lại sau.');
     }
     setLoading(false);
-  };
-
-  const handleAnonymousLogin = async () => {
-    try {
-      setLoading(true);
-      await signInAnonymously(auth);
-    } catch (err: any) {
-      console.error(err);
-      setError('Không thể đăng nhập ẩn danh lúc này. Vui lòng kiểm tra Firebase Console.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -79,28 +67,14 @@ const Auth = () => {
           </div>
 
           <button 
-          className="btn-primary" 
-          type="submit" 
-          disabled={loading}
-          style={{ width: '100%', padding: '14px', fontSize: '1.1rem', marginBottom: '16px' }}
-        >
-          {loading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
-        </button>
-
-        <div style={{ position: 'relative', textAlign: 'center', marginBottom: '16px' }}>
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
-          <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', padding: '0 10px', fontSize: '0.8rem', color: '#666' }}>HOẶC</span>
-        </div>
-
-        <button 
-          type="button"
-          onClick={handleAnonymousLogin}
-          disabled={loading}
-          style={{ width: '100%', padding: '14px', fontSize: '1.1rem', background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}
-        >
-          Dùng thử không cần tài khoản
-        </button>
-      </form>
+            className="btn-primary" 
+            type="submit" 
+            disabled={loading}
+            style={{ width: '100%', padding: '14px', fontSize: '1.1rem', marginBottom: '16px' }}
+          >
+            {loading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
+          </button>
+        </form>
 
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
           <button 
