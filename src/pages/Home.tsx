@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { getCycleDay, getPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
-import { differenceInDays, format, addDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
 import CycleCalendarModal from '../components/CycleCalendarModal';
@@ -26,6 +26,13 @@ const Home = () => {
   const stripRef = useRef<HTMLDivElement>(null);
   const isSwiping = useRef(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
+
+  // Swipe gesture state for main circle
+  const circleTouchStartX = useRef<number | null>(null);
+  const circleTouchStartY = useRef<number | null>(null);
+  const circleTouchDeltaX = useRef(0);
+  const isCircleSwiping = useRef(false);
+  const [circleSwipeOffset, setCircleSwipeOffset] = useState(0);
 
   useEffect(() => {
     const fetchCycle = async () => {
@@ -89,6 +96,63 @@ const Home = () => {
     touchDeltaX.current = 0;
     isSwiping.current = false;
     setSwipeOffset(0);
+  }, []);
+
+  // Swipe handlers for main circle
+  const handleCircleTouchStart = useCallback((e: React.TouchEvent) => {
+    circleTouchStartX.current = e.touches[0].clientX;
+    circleTouchStartY.current = e.touches[0].clientY;
+    circleTouchDeltaX.current = 0;
+    isCircleSwiping.current = false;
+  }, []);
+
+  const handleCircleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (circleTouchStartX.current === null || circleTouchStartY.current === null) return;
+    const deltaX = e.touches[0].clientX - circleTouchStartX.current;
+    const deltaY = e.touches[0].clientY - circleTouchStartY.current;
+    
+    // Only swipe horizontally if horizontal movement > vertical
+    if (!isCircleSwiping.current && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      isCircleSwiping.current = true;
+    }
+    
+    if (isCircleSwiping.current) {
+      e.preventDefault();
+      circleTouchDeltaX.current = deltaX;
+      setCircleSwipeOffset(deltaX * 0.5); // dampen the offset
+    }
+  }, []);
+
+  const handleCircleTouchEnd = useCallback(() => {
+    const SWIPE_THRESHOLD = 40;
+    if (Math.abs(circleTouchDeltaX.current) > SWIPE_THRESHOLD) {
+      if (circleTouchDeltaX.current > 0) {
+        // Swipe right → previous day
+        setSelectedDate(prev => {
+          const newDate = subDays(prev, 1);
+          // Auto-adjust week offset if moving to previous week
+          if (!isSameDay(startOfWeek(newDate, { weekStartsOn: 1 }), startOfWeek(prev, { weekStartsOn: 1 }))) {
+            setWeekOffset(w => w - 1);
+          }
+          return newDate;
+        });
+      } else {
+        // Swipe left → next day
+        setSelectedDate(prev => {
+          const newDate = addDays(prev, 1);
+          // Auto-adjust week offset if moving to next week
+          if (!isSameDay(startOfWeek(newDate, { weekStartsOn: 1 }), startOfWeek(prev, { weekStartsOn: 1 }))) {
+            setWeekOffset(w => w + 1);
+          }
+          return newDate;
+        });
+      }
+    }
+    circleTouchStartX.current = null;
+    circleTouchStartY.current = null;
+    circleTouchDeltaX.current = 0;
+    isCircleSwiping.current = false;
+    setCircleSwipeOffset(0);
   }, []);
 
   const handleStartPeriod = async () => {
@@ -308,7 +372,21 @@ const Home = () => {
       </p>
 
       {/* Main Circle with Ovulation Countdown */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+      <div 
+        style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          marginBottom: '32px', 
+          padding: '10px', 
+          margin: '0 -10px 22px -10px',
+          overflow: 'hidden', 
+          touchAction: 'pan-y',
+          cursor: 'grab' 
+        }}
+        onTouchStart={handleCircleTouchStart}
+        onTouchMove={handleCircleTouchMove}
+        onTouchEnd={handleCircleTouchEnd}
+      >
         <div style={{
           width: '250px',
           height: '250px',
@@ -322,7 +400,11 @@ const Home = () => {
           boxShadow: selectedChance === 'Trứng rụng' 
             ? '0 0 30px rgba(253, 203, 110, 0.3)' 
             : 'var(--shadow-md)',
-          transition: 'all 0.4s ease'
+          transform: `translateX(${circleSwipeOffset}px)`,
+          transition: circleSwipeOffset === 0 
+            ? 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease, border-color 0.4s ease' 
+            : 'box-shadow 0.4s ease, border-color 0.4s ease',
+          willChange: 'transform'
         }}>
           {cycle ? (
             <>
