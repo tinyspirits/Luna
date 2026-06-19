@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
-import { getCycleDay, getPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
+import { getCycleDay, getGlobalPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
 import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
@@ -240,8 +240,8 @@ const Home = () => {
 
   // Get pregnancy chance for a specific date
   const getChanceForDate = (date: Date) => {
-    if (!cycle) return 'Chưa rõ';
-    return getPregnancyChance(date, cycle);
+    if (!cycle || allCycles.length === 0) return 'Chưa rõ';
+    return getGlobalPregnancyChance(date, allCycles);
   };
 
   // Get marker class for day strip
@@ -256,7 +256,7 @@ const Home = () => {
     }
   };
 
-  const selectedChance = cycle ? getPregnancyChance(selectedDate, cycle) : 'Chưa rõ';
+  const selectedChance = (cycle && allCycles.length > 0) ? getGlobalPregnancyChance(selectedDate, allCycles) : 'Chưa rõ';
   const isSelectedToday = isSameDay(selectedDate, today);
 
   // If male and not connected to a partner, show empty state immediately
