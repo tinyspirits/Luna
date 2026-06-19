@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { getCycleDay, getPregnancyChance, calculateSmartPredictions } from '../utils/cycleCalculations';
+import { differenceInDays } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import CycleCalendarModal from '../components/CycleCalendarModal';
 
@@ -62,6 +63,7 @@ const Home = () => {
   }
 
   const cycleDay = cycle ? getCycleDay(cycle.startDate, new Date()) : 0;
+  const daysUntilStart = cycle ? differenceInDays(cycle.startDate, new Date()) : 0;
   const smartPred = allCycles.length > 0 ? calculateSmartPredictions(allCycles) : null;
   const daysUntilPeriod = smartPred?.daysUntilNextPeriod ?? (cycle ? Math.max(0, 28 - cycleDay) : null);
 
@@ -111,8 +113,12 @@ const Home = () => {
         }}>
           {cycle ? (
             <>
-              <h2 style={{ fontSize: '3rem', margin: 0, color: 'var(--primary)' }}>{cycleDay}</h2>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Ngày của chu kỳ</span>
+              <h2 style={{ fontSize: '3rem', margin: 0, color: 'var(--primary)' }}>
+                {daysUntilStart > 0 ? daysUntilStart : cycleDay}
+              </h2>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>
+                {daysUntilStart > 0 ? 'Ngày nữa tới kỳ' : 'Ngày của chu kỳ'}
+              </span>
               
               <div style={{ 
                 marginTop: '16px',                    
