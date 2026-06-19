@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { saveDailyLog, getDailyLog } from '../services/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import DatePicker from '../components/DatePicker';
+import { format } from 'date-fns';
 
 const symptomsList = [
   'Đau bụng', 'Chuột rút', 'Đau lưng', 'Đau đầu',
@@ -91,102 +92,149 @@ const Log = () => {
     <div className="animate-fade-in">
       <h1>Ghi chép hằng ngày {usePartnerData && '(Chế độ xem Bạn đời)'}</h1>
 
-      {usePartnerData && (
-        <div style={{ background: 'rgba(253,203,110,0.2)', padding: '12px', borderRadius: '8px', color: '#d35400', marginBottom: '16px', fontSize: '0.9rem', border: '1px solid #f39c12' }}>
-          Bạn đang xem dữ liệu của bạn đời. Không thể lưu thay đổi.
-        </div>
-      )}
-
       <div className="card">
         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Ngày</label>
         <DatePicker value={date} onChange={setDate} />
       </div>
 
       <div className="card">
-        <h2>🩸 Lượng máu</h2>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          {(['light', 'medium', 'heavy'] as const).map(level => (
-            <button
-              key={level}
-              onClick={() => setBleeding(bleeding === level ? null : level)}
-              style={{
-                flex: 1, padding: '12px', borderRadius: '8px',
-                border: `2px solid ${bleeding === level ? 'var(--primary)' : 'var(--border)'}`,
-                background: bleeding === level ? 'var(--primary-light)' : 'transparent',
-                fontWeight: 600, cursor: 'pointer'
-              }}
-            >
-              {bleedingMap[level]}
-            </button>
-          ))}
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Ngày</label>
+        <DatePicker value={date} onChange={setDate} />
+      </div>
+
+      {usePartnerData ? (
+        <div className="card">
+          <h2 style={{ marginBottom: '16px' }}>Chi tiết ngày {format(new Date(date), "dd/MM/yyyy")}</h2>
+          {!bleeding && !discharge && symptoms.length === 0 && mood.length === 0 && !notes ? (
+            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '20px' }}>
+              Người ấy chưa ghi chép gì vào ngày này.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {bleeding && (
+                <div>
+                  <span style={{ fontWeight: 600 }}>🩸 Lượng máu: </span>
+                  <span style={{ color: 'var(--primary)' }}>{bleedingMap[bleeding]}</span>
+                </div>
+              )}
+              {discharge && (
+                <div>
+                  <span style={{ fontWeight: 600 }}>💧 Dịch tiết: </span>
+                  <span style={{ color: 'var(--secondary)' }}>{dischargeOptions.find(o => o.value === discharge)?.label}</span>
+                </div>
+              )}
+              {symptoms.length > 0 && (
+                <div>
+                  <span style={{ fontWeight: 600 }}>🤕 Triệu chứng: </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                    {symptoms.map(s => <span key={s} style={{ padding: '4px 10px', background: 'var(--border)', borderRadius: '12px', fontSize: '0.85rem' }}>{s}</span>)}
+                  </div>
+                </div>
+              )}
+              {mood.length > 0 && (
+                <div>
+                  <span style={{ fontWeight: 600 }}>😶‍🌫️ Tâm trạng: </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                    {mood.map(m => <span key={m} style={{ padding: '4px 10px', background: 'var(--border)', borderRadius: '12px', fontSize: '0.85rem' }}>{m}</span>)}
+                  </div>
+                </div>
+              )}
+              {notes && (
+                <div>
+                  <span style={{ fontWeight: 600 }}>📝 Ghi chú: </span>
+                  <p style={{ background: 'var(--surface)', padding: '12px', borderRadius: '8px', marginTop: '8px', fontStyle: 'italic' }}>{notes}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="card">
+            <h2>🩸 Lượng máu</h2>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {(['light', 'medium', 'heavy'] as const).map(level => (
+                <button
+                  key={level}
+                  onClick={() => setBleeding(bleeding === level ? null : level)}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: '8px',
+                    border: `2px solid ${bleeding === level ? 'var(--primary)' : 'var(--border)'}`,
+                    background: bleeding === level ? 'var(--primary-light)' : 'transparent',
+                    fontWeight: 600, cursor: 'pointer'
+                  }}
+                >
+                  {bleedingMap[level]}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <div className="card">
-        <h2>💧 Dịch tiết</h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {dischargeOptions.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => setDischarge(discharge === opt.value ? null : opt.value)}
-              style={chipStyle(discharge === opt.value, 'var(--secondary)')}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-        {discharge === 'eggwhite' && (
-          <p style={{ marginTop: '8px', fontSize: '0.8rem', color: 'var(--secondary)', padding: '8px', background: 'rgba(248,165,194,0.1)', borderRadius: '6px' }}>
-            🥚 Dịch tiết dạng trứng thường xuất hiện gần ngày rụng trứng — dấu hiệu dễ thụ thai!
-          </p>
-        )}
-      </div>
+          <div className="card">
+            <h2>💧 Dịch tiết</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {dischargeOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setDischarge(discharge === opt.value ? null : opt.value)}
+                  style={chipStyle(discharge === opt.value, 'var(--secondary)')}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {discharge === 'eggwhite' && (
+              <p style={{ marginTop: '8px', fontSize: '0.8rem', color: 'var(--secondary)', padding: '8px', background: 'rgba(248,165,194,0.1)', borderRadius: '6px' }}>
+                🥚 Dịch tiết dạng trứng thường xuất hiện gần ngày rụng trứng — dấu hiệu dễ thụ thai!
+              </p>
+            )}
+          </div>
 
-      <div className="card">
-        <h2>🤒 Triệu chứng</h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {symptomsList.map(sym => (
-            <button
-              key={sym}
-              onClick={() => toggleArrayItem(symptoms, setSymptoms, sym)}
-              style={chipStyle(symptoms.includes(sym))}
-            >
-              {sym}
-            </button>
-          ))}
-        </div>
-      </div>
+          <div className="card">
+            <h2>🤒 Triệu chứng</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {symptomsList.map(sym => (
+                <button
+                  key={sym}
+                  onClick={() => toggleArrayItem(symptoms, setSymptoms, sym)}
+                  style={chipStyle(symptoms.includes(sym))}
+                >
+                  {sym}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <div className="card">
-        <h2>😊 Tâm trạng</h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {moodList.map(m => (
-            <button
-              key={m}
-              onClick={() => toggleArrayItem(mood, setMood, m)}
-              style={chipStyle(mood.includes(m), 'var(--secondary)')}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-      </div>
+          <div className="card">
+            <h2>😊 Tâm trạng</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {moodList.map(m => (
+                <button
+                  key={m}
+                  onClick={() => toggleArrayItem(mood, setMood, m)}
+                  style={chipStyle(mood.includes(m), 'var(--secondary)')}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <div className="card">
-        <h2>📝 Ghi chú</h2>
-        <textarea
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          placeholder="Ghi thêm bất kỳ điều gì bạn muốn nhớ hôm nay..."
-          rows={3}
-          style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-main)', resize: 'vertical', boxSizing: 'border-box' }}
-        />
-      </div>
+          <div className="card">
+            <h2>📝 Ghi chú</h2>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Ghi thêm bất kỳ điều gì bạn muốn nhớ hôm nay..."
+              rows={3}
+              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-main)', resize: 'vertical', boxSizing: 'border-box' }}
+            />
+          </div>
 
-      {!usePartnerData && (
-        <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '16px', fontSize: '1rem' }}>
-          {saving ? 'Đang lưu...' : '💾 Lưu thông tin hôm nay'}
-        </button>
+          <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ width: '100%', padding: '16px', fontSize: '1rem' }}>
+            {saving ? 'Đang lưu...' : '💾 Lưu thông tin hôm nay'}
+          </button>
+        </>
       )}
     </div>
   );
