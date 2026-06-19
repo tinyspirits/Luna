@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { BarChart2, TrendingUp, AlertTriangle, CheckCircle, Clock, Trash2 } from 'lucide-react';
 
 const Insights = () => {
-  const { viewingUid } = useAuth();
+  const { viewingUid, currentUser } = useAuth();
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [cycleToDelete, setCycleToDelete] = useState<string | null>(null);
@@ -164,8 +164,8 @@ const Insights = () => {
                   {i === 0 && <span style={{ fontWeight: 'bold', color: 'var(--text-main)', fontSize: '0.75rem' }}>CHU KỲ HIỆN TẠI: </span>}
                   {c.startLabel} - {c.endLabel}
                 </div>
-                {c.id && (
-                  <button onClick={() => handleDeleteCycle(c.id!)} style={{ color: 'var(--text-muted)', padding: '4px', cursor: 'pointer' }}>
+                {c.id && currentUser?.uid === viewingUid && (
+                  <button onClick={() => handleDeleteCycle(c.id!)} style={{ color: 'var(--text-muted)', padding: '4px', cursor: 'pointer', background: 'transparent', border: 'none' }}>
                     <Trash2 size={16} />
                   </button>
                 )}
