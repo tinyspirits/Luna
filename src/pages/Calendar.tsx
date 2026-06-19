@@ -66,7 +66,7 @@ const CalendarPage = () => {
             const isPeriod = chance === 'Đang Hành Kinh';
             const isOvulation = chance === 'Trứng rụng';
             const isFertile = chance === 'Cao';
-            const isSafe = chance === 'Thấp';
+            const isSafe = chance === 'An toàn';
 
             return (
               <div 

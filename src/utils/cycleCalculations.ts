@@ -100,7 +100,7 @@ export const getCycleDay = (lastPeriodStartDate: Date, currentDate: Date) => {
   return differenceInDays(currentDate, lastPeriodStartDate) + 1;
 };
 
-export type PregnancyChance = 'Trứng rụng' | 'Cao' | 'Thấp' | 'Đang Hành Kinh' | 'Chưa rõ';
+export type PregnancyChance = 'Trứng rụng' | 'Cao' | 'An toàn' | 'Đang Hành Kinh' | 'Chưa rõ';
 
 export const getPregnancyChance = (currentDate: Date, cycle: Cycle): PregnancyChance => {
   const isBleeding = isWithinInterval(currentDate, {
@@ -122,5 +122,5 @@ export const getPregnancyChance = (currentDate: Date, cycle: Cycle): PregnancyCh
   });
   if (isFertile) return 'Cao';
 
-  return 'Thấp';
+  return 'An toàn';
 };

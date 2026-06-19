@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
   startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths,
-  addDays, subDays, isWithinInterval
+  addDays, isWithinInterval
 } from 'date-fns';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Cycle } from '../services/firestore';
@@ -87,9 +87,7 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
       const cycles: { startDate: Date; endDate: Date }[] = [];
       for (let i = 0; i < sorted.length; i++) {
         const start = sorted[i];
-        const end = i < sorted.length - 1
-          ? subDays(sorted[i + 1], 1)
-          : addDays(start, 4);
+        const end = addDays(start, 4); // Mặc định 5 ngày hành kinh
         cycles.push({ startDate: start, endDate: end });
       }
       onSave(cycles);
@@ -172,11 +170,11 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
           <strong>{sorted.length + " chu ky se duoc tao:"}</strong>
           <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {sorted.map((d, i) => {
-              const end = i < sorted.length - 1 ? subDays(sorted[i + 1], 1) : addDays(d, 4);
+              const end = addDays(d, 4);
               return (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                   <span>{format(d, 'dd/MM/yyyy')}</span>
-                  <span>{" -> " + format(end, 'dd/MM/yyyy')}</span>
+                  <span>{" -> " + format(end, 'dd/MM/yyyy')} (5 ngay kinh)</span>
                 </div>
               );
             })}

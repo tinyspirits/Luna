@@ -115,20 +115,23 @@ const Home = () => {
               <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Ngày của chu kỳ</span>
               
               <div style={{ 
-                marginTop: '16px', 
-                background: getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' 
-                          : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'rgba(248, 165, 194, 0.3)' 
-                          : getPregnancyChance(new Date(), cycle) === 'Thấp' ? 'rgba(46, 204, 113, 0.2)' 
-                          : 'var(--primary)', 
+                marginTop: '16px',                    
+                boxShadow: `0 0 40px ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'rgba(253, 203, 110, 0.4)' 
+                          : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'rgba(155, 89, 182, 0.3)' 
+                          : getPregnancyChance(new Date(), cycle) === 'An toàn' ? 'rgba(46, 204, 113, 0.2)' 
+                          : 'rgba(232, 67, 147, 0.2)'}`, 
                 padding: '6px 16px', 
                 borderRadius: '20px', 
                 fontSize: '0.85rem', 
-                fontWeight: 'bold', 
+                fontWeight: 'bold',                    
+                border: `2px solid ${getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--secondary)' 
+                      : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'var(--primary)' 
+                      : getPregnancyChance(new Date(), cycle) === 'An toàn' ? '#27ae60' 
+                      : '#e84393'}`,
                 color: getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'var(--text-main)'
                      : getPregnancyChance(new Date(), cycle) === 'Cao' ? 'var(--primary)' 
-                     : getPregnancyChance(new Date(), cycle) === 'Thấp' ? '#27ae60' 
-                     : '#fff',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                     : getPregnancyChance(new Date(), cycle) === 'An toàn' ? '#27ae60' 
+                     : '#e84393'
               }}>
                 Khả năng thụ thai: {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' ? 'Đỉnh điểm' : getPregnancyChance(new Date(), cycle)}
               </div>
@@ -202,7 +205,7 @@ const Home = () => {
               <p style={{ marginTop: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                 {getPregnancyChance(new Date(), cycle) === 'Trứng rụng' && 'Hôm nay là ngày rụng trứng! Khả năng thụ thai đạt đỉnh điểm. Nếu không muốn có thai, hãy sử dụng biện pháp tránh thai an toàn.'}
                 {getPregnancyChance(new Date(), cycle) === 'Cao' && 'Bạn đang trong cửa sổ thụ thai (khoảng thời gian dễ mang thai nhất trong tháng). Hãy lưu ý nhé!'}
-                {getPregnancyChance(new Date(), cycle) === 'Thấp' && 'Hôm nay là ngày an toàn. Tỉ lệ mang thai rất thấp, cơ thể đang ở trạng thái ổn định.'}
+                {getPregnancyChance(new Date(), cycle) === 'An toàn' && 'Hôm nay là ngày an toàn. Tỉ lệ mang thai rất thấp, cơ thể đang ở trạng thái ổn định.'}
                 {getPregnancyChance(new Date(), cycle) === 'Đang Hành Kinh' && 'Đang trong kỳ kinh nguyệt. Hãy giữ ấm cơ thể và nghỉ ngơi nhiều hơn.'}
               </p>
             </div>
