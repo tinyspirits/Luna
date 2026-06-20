@@ -95,7 +95,7 @@ const Home = () => {
     }),
     center: {
       zIndex: 1,
-      x: 0,
+      x: '0%',
       opacity: 1,
       scale: 1
     },
@@ -292,7 +292,7 @@ const Home = () => {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+            transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={1}
@@ -352,7 +352,7 @@ const Home = () => {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+            transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={1}
