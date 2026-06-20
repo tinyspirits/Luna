@@ -4,7 +4,7 @@ import type { Cycle, DailyLog } from '../services/firestore';
 import { calculateSmartPredictions } from '../utils/cycleCalculations';
 import { differenceInDays, format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
-import { BarChart2, TrendingUp, AlertTriangle, CheckCircle, Clock, Trash2 } from 'lucide-react';
+import { BarChart2, TrendingUp, AlertTriangle, CheckCircle, Clock, Trash2, ChevronDown } from 'lucide-react';
 
 const Insights = () => {
   const { viewingUid, currentUser } = useAuth();
@@ -185,14 +185,30 @@ const Insights = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <h2 style={{ margin: 0 }}>Độ dài chu kỳ</h2>
-            <select 
-              value={selectedYear} 
-              onChange={e => setSelectedYear(e.target.value === 'recent' ? 'recent' : Number(e.target.value))}
-              style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--surface)', color: 'var(--text-main)', cursor: 'pointer' }}
-            >
-              <option value="recent">Gần đây</option>
-              {sortedYears.map(y => <option key={y} value={y}>Năm {y}</option>)}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <select 
+                value={selectedYear} 
+                onChange={e => setSelectedYear(e.target.value === 'recent' ? 'recent' : Number(e.target.value))}
+                style={{ 
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  padding: '6px 32px 6px 14px', 
+                  borderRadius: '20px', 
+                  border: '1px solid var(--border)', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 600,
+                  background: 'var(--surface)', 
+                  color: 'var(--text-main)', 
+                  cursor: 'pointer',
+                  boxShadow: 'var(--shadow-sm)',
+                  outline: 'none'
+                }}
+              >
+                <option value="recent">Gần đây</option>
+                {sortedYears.map(y => <option key={y} value={y}>Năm {y}</option>)}
+              </select>
+              <ChevronDown size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+            </div>
           </div>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', letterSpacing: '0.05em' }}>TRUNG BÌNH: {prediction.averageCycleLength} ng</span>
         </div>
