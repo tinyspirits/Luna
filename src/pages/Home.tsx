@@ -84,22 +84,26 @@ const Home = () => {
   const handleWeekSwipe = (direction: number) => {
     setWeekSlideDirection(direction);
     setWeekOffset(w => direction > 0 ? w - 1 : w + 1);
+    setSelectedDate(prev => direction > 0 ? subDays(prev, 7) : addDays(prev, 7));
   };
 
   const slideVariants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
+      x: direction > 0 ? '-100%' : '100%',
+      opacity: 0.5,
+      scale: 0.9
     }),
     center: {
       zIndex: 1,
       x: 0,
       opacity: 1,
+      scale: 1
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 0.5,
+      scale: 0.9
     }),
   };
 
