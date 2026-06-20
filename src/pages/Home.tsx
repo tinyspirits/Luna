@@ -635,7 +635,8 @@ const Home = () => {
         const currentCycle = sortedDesc[0];
         
         const prevCycleLength = differenceInDays(currentCycle.startDate, prevCycle.startDate);
-        const prevPeriodLength = prevCycle.endDate ? (differenceInDays(prevCycle.endDate, prevCycle.startDate) + 1) : 5;
+        const rawPeriodLen = prevCycle.endDate ? (differenceInDays(prevCycle.endDate, prevCycle.startDate) + 1) : 5;
+        const prevPeriodLength = rawPeriodLen > 10 ? 5 : rawPeriodLen; // Kỳ kinh không thể > 10 ngày, nếu > 10 thì endDate là ngày cuối chu kỳ chứ không phải ngày cuối kinh
         
         const lengths: number[] = [];
         for (let i = 0; i < sortedDesc.length - 1; i++) {
