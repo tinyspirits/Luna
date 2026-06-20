@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 
 interface DailyCheckinModalProps {
   onClose: () => void;
@@ -8,7 +9,7 @@ interface DailyCheckinModalProps {
 const DailyCheckinModal = ({ onClose }: DailyCheckinModalProps) => {
   const navigate = useNavigate();
 
-  return (
+  const modalContent = (
     <div style={{
       position: 'fixed',
       top: 0, left: 0, right: 0, bottom: 0,
@@ -80,6 +81,8 @@ const DailyCheckinModal = ({ onClose }: DailyCheckinModalProps) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default DailyCheckinModal;
