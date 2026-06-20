@@ -177,21 +177,30 @@ const Settings = () => {
         </div>
 
         {profile?.partnerUid ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(46, 204, 113, 0.1)', padding: '16px', borderRadius: '8px', border: '1px solid #27ae60' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <p style={{ color: '#27ae60', fontWeight: 600, margin: 0 }}>✅ Đã kết nối: ({profile.partnerUid.substring(0, 8)}...)</p>
-              <button 
-                onClick={() => setShowUnlinkConfirm(true)} 
-                className="btn-secondary" 
-                style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}
-                disabled={linking}
-              >
-                Hủy kết nối
-              </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(46, 204, 113, 0.15)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(46, 204, 113, 0.4)' }}>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#27ae60', boxShadow: '0 0 8px #27ae60' }}></div>
+                  <h3 style={{ color: '#27ae60', fontWeight: 700, margin: 0, fontSize: '1.05rem' }}>Đã kết nối</h3>
+                </div>
+                <button 
+                  onClick={() => setShowUnlinkConfirm(true)} 
+                  className="btn-secondary" 
+                  style={{ padding: '6px 12px', fontSize: '0.75rem', color: 'var(--danger)', borderColor: 'var(--danger)', borderRadius: '12px', background: 'transparent' }}
+                  disabled={linking}
+                >
+                  Hủy kết nối
+                </button>
+              </div>
+              <p style={{ color: 'var(--text-muted)', margin: '0 0 0 18px', fontSize: '0.85rem' }}>
+                Mã bạn đời: <span style={{ fontFamily: 'monospace', background: 'var(--surface)', padding: '2px 6px', borderRadius: '4px', color: 'var(--text-main)' }}>{profile.partnerUid.substring(0, 8)}...</span>
+              </p>
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>Tên hiển thị:</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px', paddingTop: '16px', borderTop: '1px dashed rgba(46, 204, 113, 0.3)' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Tên hiển thị của đối phương:</label>
               {editingPartnerName ? (
                 <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
                   <input 
