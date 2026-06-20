@@ -12,9 +12,33 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+import { Capacitor } from '@capacitor/core';
+import { initializeAuth, browserLocalPersistence } from 'firebase/auth';
 
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+// Initialize Firebase safely
+let app: any;
+let db: any;
+let auth: any;
+
+try {
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  
+  if (Capacitor.isNativePlatform()) {
+    auth = initializeAuth(app, {
+      persistence: browserLocalPersistence
+    });
+  } else {
+    auth = getAuth(app);
+  }
+} catch (error: any) {
+  // Report the error to the DOM directly so we can see it on the white screen
+  setTimeout(() => {
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'color:blue;font-size:16px;z-index:10000;position:absolute;top:250px;background:white;padding:10px;border:2px solid blue;';
+    errDiv.innerText = 'Firebase Init Error: ' + error.message;
+    document.body.appendChild(errDiv);
+  }, 1000);
+}
+
+export { db, auth };
