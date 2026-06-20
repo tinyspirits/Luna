@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:ios": "CAPACITOR=true tsc -b && CAPACITOR=true vite build",
+    "ios": "npm run build:ios && npx cap sync && npx cap open ios",
     "lint": "eslint .",
     "preview": "vite preview"
   },
