@@ -190,7 +190,9 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
     }}>
       <div style={{
         width: '100%', maxWidth: '480px',
-        background: 'var(--background)',
+        background: 'var(--surface)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         borderRadius: '24px 24px 0 0',
         padding: '24px 24px 100px 24px',
         maxHeight: '92vh',

@@ -5,11 +5,11 @@
   --secondary: #fbc531;
   --secondary-hover: #e1b12c;
   --background: #f5f6fa;
-  --surface: rgba(255, 255, 255, 0.7);
+  --surface: rgba(255, 255, 255, 0.55);
   --text-main: #2f3640;
   --text-light: #718093;
   --text-muted: #747d8c;
-  --border: rgba(220, 221, 225, 0.5);
+  --border: rgba(220, 221, 225, 0.4);
   --danger: #e84118;
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
@@ -25,10 +25,10 @@
   :root {
     color-scheme: dark;
     --background: #1e1e24;
-    --surface: #2b2b36;
+    --surface: rgba(43, 43, 54, 0.45);
     --text-main: #f1f2f6;
     --text-muted: #a4b0be;
-    --border: #3d3d4e;
+    --border: rgba(255, 255, 255, 0.15);
     --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
   }
 }

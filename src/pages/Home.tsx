@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
@@ -292,7 +292,7 @@ const Home = () => {
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={1}
-            onDragEnd={(e, { offset, velocity }) => {
+            onDragEnd={(_, { offset }) => {
               if (offset.x < -50) handleWeekSwipe(-1);
               else if (offset.x > 50) handleWeekSwipe(1);
             }}
@@ -352,7 +352,7 @@ const Home = () => {
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={1}
-            onDragEnd={(e, { offset, velocity }) => {
+            onDragEnd={(_, { offset }) => {
               if (offset.x < -50) handleDaySwipe(-1);
               else if (offset.x > 50) handleDaySwipe(1);
             }}
@@ -370,6 +370,8 @@ const Home = () => {
               boxShadow: isTransparentCircle ? 'none' : (selectedChance === 'Trứng rụng' 
                 ? '0 0 30px rgba(253, 203, 110, 0.3)' 
                 : 'var(--shadow-md)'),
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
               transition: 'box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease',
             }}
           >
