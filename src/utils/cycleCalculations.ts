@@ -1,4 +1,4 @@
-import { addDays, subDays, differenceInDays, isWithinInterval, isSameDay } from 'date-fns';
+import { addDays, subDays, differenceInDays, isWithinInterval, isSameDay, startOfDay } from 'date-fns';
 import type { Cycle } from '../services/firestore';
 
 export interface UserSettings {
@@ -135,6 +135,7 @@ export const isDatePredicted = (currentDate: Date, cycles: Cycle[]): boolean => 
 
 export const getNextEvents = (currentDate: Date, cycles: Cycle[]) => {
   if (cycles.length === 0) return { nextPeriodDate: null, nextOvulationDate: null, daysUntilNextPeriod: null, daysUntilNextOvulation: null };
+  const normalizedDate = startOfDay(currentDate);
   const sorted = [...cycles].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
   const currentCycle = sorted[sorted.length - 1];
   
@@ -143,14 +144,14 @@ export const getNextEvents = (currentDate: Date, cycles: Cycle[]) => {
   const allPeriods = [currentCycle.expectedNextPeriod, ...future.map(f => f.start)];
   const allOvulations = [currentCycle.expectedOvulation, ...future.map(f => f.ovulation)];
   
-  const nextPeriodDate = allPeriods.find(d => differenceInDays(d, currentDate) >= 0) || null;
-  const nextOvulationDate = allOvulations.find(d => differenceInDays(d, currentDate) >= 0) || null;
+  const nextPeriodDate = allPeriods.find(d => differenceInDays(startOfDay(d), normalizedDate) >= 0) || null;
+  const nextOvulationDate = allOvulations.find(d => differenceInDays(startOfDay(d), normalizedDate) >= 0) || null;
   
   return {
     nextPeriodDate,
     nextOvulationDate,
-    daysUntilNextPeriod: nextPeriodDate ? differenceInDays(nextPeriodDate, currentDate) : null,
-    daysUntilNextOvulation: nextOvulationDate ? differenceInDays(nextOvulationDate, currentDate) : null,
+    daysUntilNextPeriod: nextPeriodDate ? differenceInDays(startOfDay(nextPeriodDate), normalizedDate) : null,
+    daysUntilNextOvulation: nextOvulationDate ? differenceInDays(startOfDay(nextOvulationDate), normalizedDate) : null,
   };
 };
 

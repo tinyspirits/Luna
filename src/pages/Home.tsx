@@ -6,6 +6,7 @@ import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, end
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
 import CycleCalendarModal from '../components/CycleCalendarModal';
+import DailyCheckinModal from '../components/DailyCheckinModal';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const WEEKDAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
@@ -19,6 +20,7 @@ const Home = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekOffset, setWeekOffset] = useState(0);
   const [showTrendInfo, setShowTrendInfo] = useState(false);
+  const [showDailyCheckin, setShowDailyCheckin] = useState(false);
 
   // Swipe gesture state for day strip
   const touchStartX = useRef<number | null>(null);
@@ -55,6 +57,29 @@ const Home = () => {
     setSelectedDate(new Date());
     setWeekOffset(0);
   }, [usePartnerData]);
+
+  // Show daily checkin modal once a day
+  useEffect(() => {
+    if (!currentUser || profile?.gender === 'male' || usePartnerData) return;
+    
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const lastCheckinDate = localStorage.getItem(`lastCheckinDate_${currentUser.uid}`);
+    
+    if (lastCheckinDate !== todayStr) {
+      const timer = setTimeout(() => {
+        setShowDailyCheckin(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser, profile?.gender, usePartnerData]);
+
+  const handleCloseDailyCheckin = () => {
+    if (currentUser) {
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      localStorage.setItem(`lastCheckinDate_${currentUser.uid}`, todayStr);
+    }
+    setShowDailyCheckin(false);
+  };
 
   // Swipe handlers for day strip
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -973,14 +998,20 @@ const Home = () => {
       </div>
     </div>
 
-    {showHistoryModal && (
-      <CycleCalendarModal
-        onSave={handleAddHistory}
-        onClose={() => setShowHistoryModal(false)}
-        existingCycles={allCycles}
-      />
-    )}
-    </>
+      {showHistoryModal && (
+        <CycleCalendarModal
+          cycles={allCycles}
+          onClose={() => setShowHistoryModal(false)}
+          onSave={handleAddHistory}
+        />
+      )}
+
+      {showDailyCheckin && (
+        <DailyCheckinModal
+          onClose={handleCloseDailyCheckin}
+        />
+      )}
+    </div>
   );
 };
 
