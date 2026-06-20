@@ -141,11 +141,11 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
   };
 
   const legends = [
-    { color: '#e84393', label: 'Ngay bat dau kinh' },
-    { color: 'rgba(232,67,147,0.25)', label: 'Ngay hanh kinh', border: '' },
-    { color: 'rgba(155,89,182,0.15)', label: 'Du doan kinh', border: '1px dashed var(--primary)' },
-    { color: 'var(--secondary)', label: 'Du doan rung trung' },
-    { color: 'var(--primary)', label: 'Dang chon' },
+    { color: '#e84393', label: 'Ngày bắt đầu kinh' },
+    { color: 'rgba(232,67,147,0.25)', label: 'Ngày hành kinh', border: '' },
+    { color: 'rgba(155,89,182,0.15)', label: 'Dự đoán kinh', border: '1px dashed var(--primary)' },
+    { color: 'var(--secondary)', label: 'Dự đoán rụng trứng' },
+    { color: 'var(--primary)', label: 'Đang chọn' },
   ];
 
   // Build summary for "start" mode
@@ -156,7 +156,7 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
     if (mode === 'period') {
       return (
         <div style={{ background: 'var(--surface)', borderRadius: '10px', padding: '12px', marginBottom: '16px', fontSize: '0.85rem' }}>
-          <strong>{"Da chon " + sorted.length + " ngay hanh kinh:"}</strong><br/>
+          <strong>{"Đã chọn " + sorted.length + " ngày hành kinh:"}</strong><br/>
           <span style={{ color: 'var(--text-muted)' }}>
             {format(sorted[0], 'dd/MM/yyyy')} {" -> "} {format(sorted[sorted.length - 1], 'dd/MM/yyyy')}
           </span>
@@ -165,14 +165,14 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
     } else {
       return (
         <div style={{ background: 'var(--surface)', borderRadius: '10px', padding: '12px', marginBottom: '16px', fontSize: '0.85rem' }}>
-          <strong>{sorted.length + " chu ky se duoc tao:"}</strong>
+          <strong>{sorted.length + " chu kỳ sẽ được tạo:"}</strong>
           <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {sorted.map((d, i) => {
               const end = addDays(d, 4);
               return (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                   <span>{format(d, 'dd/MM/yyyy')}</span>
-                  <span>{" -> " + format(end, 'dd/MM/yyyy')} (5 ngay kinh)</span>
+                  <span>{" -> " + format(end, 'dd/MM/yyyy')} (5 ngày kinh)</span>
                 </div>
               );
             })}
@@ -198,7 +198,7 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
       }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0 }}>Nhap chu ky cu</h2>
+          <h2 style={{ margin: 0 }}>Nhập chu kỳ cũ</h2>
           <button onClick={onClose} style={{ background: 'var(--border)', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} />
           </button>
@@ -214,7 +214,7 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
             transition: 'all 0.2s',
           }}>
             <input type="radio" name="mode" value="period" checked={mode === 'period'} onChange={() => setMode('period')} style={{ accentColor: 'var(--primary)' }} />
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Ngay hanh kinh</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Ngày hành kinh</span>
           </label>
           <label style={{
             flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
@@ -224,15 +224,15 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
             transition: 'all 0.2s',
           }}>
             <input type="radio" name="mode" value="start" checked={mode === 'start'} onChange={() => setMode('start')} style={{ accentColor: 'var(--primary)' }} />
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Bat dau chu ky</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Bắt đầu chu kỳ</span>
           </label>
         </div>
 
         {/* Instruction */}
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px', textAlign: 'center' }}>
           {mode === 'period'
-            ? 'Chon tat ca cac ngay ban co kinh trong thang nay'
-            : 'Chon cac ngay bat dau kinh o moi thang (moi ngay = 1 chu ky)'
+            ? 'Chọn tất cả các ngày bạn có kinh trong tháng này'
+            : 'Chọn các ngày bắt đầu kinh ở mỗi tháng (mỗi ngày = 1 chu kỳ)'
           }
         </p>
 
@@ -283,10 +283,9 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
         {/* Selected summary */}
         {buildSummary()}
 
-        {/* Buttons */}
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={onClose} className="btn-secondary" style={{ flex: 1 }}>Huy</button>
-          <button onClick={handleSave} className="btn-primary" style={{ flex: 1 }} disabled={selectedDays.length === 0}>Luu chu ky</button>
+          <button onClick={onClose} className="btn-secondary" style={{ flex: 1 }}>Hủy</button>
+          <button onClick={handleSave} className="btn-primary" style={{ flex: 1 }} disabled={selectedDays.length === 0}>Lưu chu kỳ</button>
         </div>
       </div>
     </div>
