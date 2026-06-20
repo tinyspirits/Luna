@@ -1011,7 +1011,7 @@ const Home = () => {
           onClose={handleCloseDailyCheckin}
         />
       )}
-    </div>
+    </>
   );
 };
 
