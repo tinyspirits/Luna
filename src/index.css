@@ -87,7 +87,8 @@ input[type="date"] {
 .content-area {
   flex: 1;
   padding: 20px;
-  padding-bottom: 90px;
+  padding-top: calc(40px + env(safe-area-inset-top));
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
   overflow-y: auto;
   backdrop-filter: blur(4px);
 }
