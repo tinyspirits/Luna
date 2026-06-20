@@ -414,15 +414,9 @@ const Home = () => {
                 </>
               ) : selectedChance === 'Trứng rụng' ? (
                 <>
-                  <span style={{ color: 'var(--secondary)', fontWeight: 700, fontSize: '0.9rem' }}>
-                    🥚 Hôm nay
-                  </span>
-                  <h2 style={{ fontSize: '2rem', margin: '8px 0', color: 'var(--secondary)', lineHeight: 1.2, fontWeight: 800 }}>
-                    Rụng trứng
-                  </h2>
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.8rem' }}>
-                    Đỉnh điểm thụ thai
-                  </span>
+                  <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px' }}>🥚 Hôm nay</span>
+                  <span style={{ color: 'var(--ovulation-text)', fontWeight: 800, fontSize: '2.5rem', marginBottom: '4px' }}>Rụng trứng</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Đỉnh điểm thụ thai</span>
                 </>
               ) : daysUntilNextOvulation !== null && daysUntilNextPeriod !== null && daysUntilNextOvulation < daysUntilNextPeriod ? (
                 <>

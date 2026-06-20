@@ -19,6 +19,7 @@
   --radius-md: 16px;
   --radius-full: 9999px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --ovulation-text: var(--secondary);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -40,6 +41,7 @@ body.theme-light {
   --text-main: #2f3640;
   --text-muted: #576574;
   --border: rgba(220, 221, 225, 0.5);
+  --ovulation-text: #d35400; /* Dark orange */
 }
 
 body.theme-dark {
@@ -49,6 +51,7 @@ body.theme-dark {
   --text-main: #f1f2f6;
   --text-muted: #c8d6e5;
   --border: rgba(255, 255, 255, 0.2);
+  --ovulation-text: var(--secondary); /* Bright yellow */
 }
 
 * {
@@ -228,15 +231,15 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 }
 
 .calendar-cell.ovulation {
-  background: var(--secondary);
-  color: var(--text-main);
-  box-shadow: 0 0 10px var(--secondary);
+  background: var(--secondary) !important;
+  color: #2f3640 !important;
+  box-shadow: 0 0 12px var(--secondary);
   font-weight: bold;
 }
 
 .calendar-cell.fertile {
-  background: rgba(248, 165, 194, 0.3); /* Nhấn nhẹ bằng màu hồng */
-  border: 1px dashed var(--secondary);
+  background: rgba(248, 165, 194, 0.5); /* Đậm hơn để dễ nhìn */
+  border: 2px dashed var(--secondary);
 }
 
 .calendar-cell.safe {
@@ -360,15 +363,15 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 }
 
 .day-strip-item .day-num.ovulation {
-  background: var(--secondary);
-  color: var(--text-main);
-  box-shadow: 0 0 10px var(--secondary);
+  background: var(--secondary) !important;
+  color: #2f3640 !important;
+  box-shadow: 0 0 12px var(--secondary);
   font-weight: bold;
 }
 
 .day-strip-item .day-num.fertile {
-  background: rgba(248, 165, 194, 0.3);
-  border: 1px dashed var(--secondary);
+  background: rgba(248, 165, 194, 0.5);
+  border: 2px dashed var(--secondary);
 }
 
 .day-strip-item .day-num.low {
