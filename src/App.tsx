@@ -8,11 +8,12 @@ import Auth from './pages/Auth';
 import Settings from './pages/Settings';
 import Insights from './pages/Insights';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Wrapper để quản lý Background theo cá nhân hóa
 const ThemeWrapper = ({ children }: { children: ReactElement }) => {
   const { profile, currentUser } = useAuth();
+  const [bgImage, setBgImage] = useState<string | null>(null);
   
   useEffect(() => {
     let bg = profile?.themeBackground;
@@ -28,16 +29,33 @@ const ThemeWrapper = ({ children }: { children: ReactElement }) => {
     }
 
     if (bg && bg !== 'var(--background)') {
-      document.body.style.background = bg;
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundAttachment = 'fixed';
+      document.body.style.background = 'transparent';
+      setBgImage(bg);
     } else {
       document.body.style.background = 'var(--background)';
+      setBgImage(null);
     }
   }, [profile?.themeBackground, currentUser]);
   
-  return <>{children}</>;
+  return (
+    <>
+      {bgImage && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100dvh',
+          zIndex: -1,
+          background: bgImage,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }} />
+      )}
+      {children}
+    </>
+  );
 };
 
 const Navigation = () => {
