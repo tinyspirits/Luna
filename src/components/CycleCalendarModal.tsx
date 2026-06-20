@@ -241,12 +241,12 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
 
         {/* Month navigation */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} style={{ background: 'var(--surface)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ChevronLeft size={18} />
+          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="btn-secondary" style={{ padding: '8px', borderRadius: '50%', background: 'transparent', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronLeft size={20} />
           </button>
           <h3 style={{ margin: 0 }}>{format(currentMonth, "MMMM yyyy")}</h3>
-          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} style={{ background: 'var(--surface)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ChevronRight size={18} />
+          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="btn-secondary" style={{ padding: '8px', borderRadius: '50%', background: 'transparent', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronRight size={20} />
           </button>
         </div>
 

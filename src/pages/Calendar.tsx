@@ -4,6 +4,7 @@ import { getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { getGlobalPregnancyChance } from '../utils/cycleCalculations';
 import { useAuth } from '../contexts/AuthContext';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CalendarPage = () => {
   const { viewingUid, usePartnerData, setUsePartnerData, profile } = useAuth();
@@ -46,9 +47,13 @@ const CalendarPage = () => {
       
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <button className="btn-secondary" onClick={prevMonth}>&lt;</button>
+          <button className="btn-secondary" style={{ padding: '8px', borderRadius: '50%', background: 'transparent', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={prevMonth}>
+            <ChevronLeft size={20} />
+          </button>
           <h2 style={{ margin: 0 }}>{format(currentDate, dateFormat)}</h2>
-          <button className="btn-secondary" onClick={nextMonth}>&gt;</button>
+          <button className="btn-secondary" style={{ padding: '8px', borderRadius: '50%', background: 'transparent', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={nextMonth}>
+            <ChevronRight size={20} />
+          </button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', textAlign: 'center' }}>
