@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions, isDatePredicted, getNextEvents } from '../utils/cycleCalculations';
@@ -22,20 +23,8 @@ const Home = () => {
   const [showTrendInfo, setShowTrendInfo] = useState(false);
   const [showDailyCheckin, setShowDailyCheckin] = useState(false);
 
-  // Swipe gesture state for day strip
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const touchDeltaX = useRef(0);
-  const stripRef = useRef<HTMLDivElement>(null);
-  const isSwiping = useRef(false);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-
-  // Swipe gesture state for main circle
-  const circleTouchStartX = useRef<number | null>(null);
-  const circleTouchStartY = useRef<number | null>(null);
-  const circleTouchDeltaX = useRef(0);
-  const isCircleSwiping = useRef(false);
-  const [circleSlide, setCircleSlide] = useState({ offset: 0, transition: 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)', opacity: 1 });
+  const [slideDirection, setSlideDirection] = useState(0);
+  const [weekSlideDirection, setWeekSlideDirection] = useState(0);
 
   useEffect(() => {
     const fetchCycle = async () => {
@@ -81,136 +70,39 @@ const Home = () => {
     setShowDailyCheckin(false);
   };
 
-  // Swipe handlers for day strip
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    touchDeltaX.current = 0;
-    isSwiping.current = false;
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartX.current === null || touchStartY.current === null) return;
-    const deltaX = e.touches[0].clientX - touchStartX.current;
-    const deltaY = e.touches[0].clientY - touchStartY.current;
-    
-    // Only swipe horizontally if horizontal movement > vertical
-    if (!isSwiping.current && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-      isSwiping.current = true;
-    }
-    
-    if (isSwiping.current) {
-      e.preventDefault();
-      touchDeltaX.current = deltaX;
-      setSwipeOffset(deltaX * 0.4); // dampen the offset
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    const SWIPE_THRESHOLD = 50;
-    if (Math.abs(touchDeltaX.current) > SWIPE_THRESHOLD) {
-      if (touchDeltaX.current > 0) {
-        // Swipe right → previous week
-        setWeekOffset(w => w - 1);
-      } else {
-        // Swipe left → next week
-        setWeekOffset(w => w + 1);
+  const handleDaySwipe = (direction: number) => {
+    setSlideDirection(direction);
+    setSelectedDate(prev => {
+      const newDate = direction > 0 ? subDays(prev, 1) : addDays(prev, 1);
+      if (!isSameDay(startOfWeek(newDate, { weekStartsOn: 1 }), startOfWeek(prev, { weekStartsOn: 1 }))) {
+        setWeekOffset(w => direction > 0 ? w - 1 : w + 1);
       }
-    }
-    touchStartX.current = null;
-    touchStartY.current = null;
-    touchDeltaX.current = 0;
-    isSwiping.current = false;
-    setSwipeOffset(0);
-  }, []);
+      return newDate;
+    });
+  };
 
-  // Swipe handlers for main circle
-  const handleCircleTouchStart = useCallback((e: React.TouchEvent) => {
-    circleTouchStartX.current = e.touches[0].clientX;
-    circleTouchStartY.current = e.touches[0].clientY;
-    circleTouchDeltaX.current = 0;
-    isCircleSwiping.current = false;
-  }, []);
+  const handleWeekSwipe = (direction: number) => {
+    setWeekSlideDirection(direction);
+    setWeekOffset(w => direction > 0 ? w - 1 : w + 1);
+  };
 
-  const handleCircleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (circleTouchStartX.current === null || circleTouchStartY.current === null) return;
-    const deltaX = e.touches[0].clientX - circleTouchStartX.current;
-    const deltaY = e.touches[0].clientY - circleTouchStartY.current;
-    
-    if (!isCircleSwiping.current && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-      isCircleSwiping.current = true;
-    }
-    
-    if (isCircleSwiping.current) {
-      e.preventDefault();
-      circleTouchDeltaX.current = deltaX;
-      // 1:1 tracking for immediate feel, fade out slightly as it moves away
-      setCircleSlide({ 
-        offset: deltaX, 
-        transition: 'none', 
-        opacity: Math.max(0.4, 1 - Math.abs(deltaX) / 300) 
-      });
-    }
-  }, []);
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 300 : -300,
+      opacity: 0,
+    }),
+  };
 
-  const handleCircleTouchEnd = useCallback(() => {
-    const SWIPE_THRESHOLD = 50;
-    const deltaX = circleTouchDeltaX.current;
-    
-    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-      const isSwipingRight = deltaX > 0;
-      
-      // Animate out completely
-      setCircleSlide({ 
-        offset: isSwipingRight ? 300 : -300, 
-        transition: 'transform 0.25s ease-out, opacity 0.2s ease-out', 
-        opacity: 0 
-      });
-
-      // Wait for out-animation to finish
-      setTimeout(() => {
-        setSelectedDate(prev => {
-          const newDate = isSwipingRight ? subDays(prev, 1) : addDays(prev, 1);
-          // Auto-adjust week offset if moving to another week
-          if (!isSameDay(startOfWeek(newDate, { weekStartsOn: 1 }), startOfWeek(prev, { weekStartsOn: 1 }))) {
-            setWeekOffset(w => isSwipingRight ? w - 1 : w + 1);
-          }
-          return newDate;
-        });
-
-        // Instantly move to opposite side for slide-in
-        setCircleSlide({ 
-          offset: isSwipingRight ? -300 : 300, 
-          transition: 'none', 
-          opacity: 0 
-        });
-
-        // Trigger slide-in on next frame
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setCircleSlide({ 
-              offset: 0, 
-              transition: 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease-in', 
-              opacity: 1 
-            });
-          });
-        });
-      }, 200);
-
-    } else {
-      // Snap back if threshold not met
-      setCircleSlide({ 
-        offset: 0, 
-        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease', 
-        opacity: 1 
-      });
-    }
-
-    circleTouchStartX.current = null;
-    circleTouchStartY.current = null;
-    circleTouchDeltaX.current = 0;
-    isCircleSwiping.current = false;
-  }, []);
 
   const handleStartPeriod = async () => {
     if (!currentUser) return;
@@ -362,7 +254,7 @@ const Home = () => {
       <div className="day-strip-header">
         <h2>{format(weekDays[3] || today, "d 'tháng' M", { locale: vi })}</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button className="calendar-icon-btn" onClick={() => { setWeekOffset(w => w - 1); }} title="Tuần trước">
+          <button className="calendar-icon-btn" onClick={() => { handleWeekSwipe(1); }} title="Tuần trước">
             <ChevronLeft size={18} />
           </button>
           <button 
@@ -373,7 +265,7 @@ const Home = () => {
           >
             <CalendarIcon size={16} />
           </button>
-          <button className="calendar-icon-btn" onClick={() => { setWeekOffset(w => w + 1); }} title="Tuần sau">
+          <button className="calendar-icon-btn" onClick={() => { handleWeekSwipe(-1); }} title="Tuần sau">
             <ChevronRight size={18} />
           </button>
         </div>
@@ -387,20 +279,26 @@ const Home = () => {
       </div>
 
       {/* Day Strip - 7 days grid with swipe */}
-      <div 
-        className="day-strip-swipe-container"
-        ref={stripRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div 
-          className="day-strip" 
-          style={{ 
-            transform: `translateX(${swipeOffset}px)`,
-            transition: swipeOffset === 0 ? 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
-          }}
-        >
+      <div className="day-strip-swipe-container" style={{ position: 'relative', height: '60px', touchAction: 'pan-y' }}>
+        <AnimatePresence initial={false} custom={weekSlideDirection} mode="popLayout">
+          <motion.div
+            key={weekOffset}
+            custom={weekSlideDirection}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.x < -50) handleWeekSwipe(-1);
+              else if (offset.x > 50) handleWeekSwipe(1);
+            }}
+            className="day-strip"
+            style={{ position: 'absolute', width: '100%' }}
+          >
           {weekDays.map(day => {
             const chance = getChanceForDate(day);
             const markerClass = getMarkerClass(chance);
@@ -417,7 +315,8 @@ const Home = () => {
               </div>
             );
           })}
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Main Heading */}
@@ -432,40 +331,49 @@ const Home = () => {
       </p>
 
       {/* Main Circle with Ovulation Countdown */}
-      <div 
-        style={{ 
+      <div style={{ 
+          position: 'relative', 
           display: 'flex', 
           justifyContent: 'center', 
+          height: '270px',
           marginBottom: '32px', 
-          padding: '10px', 
-          margin: '0 -10px 22px -10px',
-          overflow: 'hidden', 
           touchAction: 'pan-y',
           cursor: 'grab' 
-        }}
-        onTouchStart={handleCircleTouchStart}
-        onTouchMove={handleCircleTouchMove}
-        onTouchEnd={handleCircleTouchEnd}
-      >
-        <div style={{
-          width: '250px',
-          height: '250px',
-          borderRadius: '50%',
-          background: isTransparentCircle ? 'transparent' : (cycle ? 'var(--surface)' : 'var(--border)'),
-          border: isTransparentCircle ? 'none' : `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : (selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh') ? '#e84393' : 'var(--primary-light)'}`,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: isTransparentCircle ? 'none' : (selectedChance === 'Trứng rụng' 
-            ? '0 0 30px rgba(253, 203, 110, 0.3)' 
-            : 'var(--shadow-md)'),
-          transform: `translateX(${circleSlide.offset}px)`,
-          opacity: circleSlide.opacity,
-          transition: `${circleSlide.transition}, box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease`,
-          willChange: 'transform, opacity'
-        }}>
-          {showCountdownOverride ? (
+      }}>
+        <AnimatePresence initial={false} custom={slideDirection} mode="popLayout">
+          <motion.div
+            key={selectedDate.toISOString()}
+            custom={slideDirection}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.x < -50) handleDaySwipe(-1);
+              else if (offset.x > 50) handleDaySwipe(1);
+            }}
+            style={{
+              position: 'absolute',
+              width: '250px',
+              height: '250px',
+              borderRadius: '50%',
+              background: isTransparentCircle ? 'transparent' : (cycle ? 'var(--surface)' : 'var(--border)'),
+              border: isTransparentCircle ? 'none' : `10px solid ${selectedChance === 'Trứng rụng' ? 'var(--secondary)' : (selectedChance === 'Đang Hành Kinh' || selectedChance === 'Dự đoán hành kinh') ? '#e84393' : 'var(--primary-light)'}`,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: isTransparentCircle ? 'none' : (selectedChance === 'Trứng rụng' 
+                ? '0 0 30px rgba(253, 203, 110, 0.3)' 
+                : 'var(--shadow-md)'),
+              transition: 'box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease',
+            }}
+          >
+            {showCountdownOverride ? (
             <>
               <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1rem', marginBottom: '8px' }}>
                 {daysUntilNextPeriod !== null && daysUntilNextPeriod <= 3 ? 'Hành kinh sau' : 'Rụng trứng sau'}
@@ -583,7 +491,8 @@ const Home = () => {
               <h3 style={{ color: 'var(--text-muted)' }}>Chưa có dữ liệu</h3>
             </div>
           )}
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Ovulation date info banner */}
