@@ -24,6 +24,15 @@ const Settings = () => {
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(false);
   const [editingPartnerName, setEditingPartnerName] = useState(false);
   const [newPartnerName, setNewPartnerName] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = () => {
+    if (currentUser?.uid) {
+      navigator.clipboard.writeText(currentUser.uid);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -137,8 +146,34 @@ const Settings = () => {
       <div className="card">
         <h2>Chia sẻ cho bạn đời</h2>
         <p style={{ marginBottom: '8px' }}>Gửi mã này cho bạn đời để họ có thể xem chu kỳ của bạn:</p>
-        <div style={{ background: 'var(--border)', padding: '12px', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold', letterSpacing: '2px', marginBottom: '16px', userSelect: 'all' }}>
-          {currentUser?.uid}
+        <div 
+          onClick={handleCopyCode}
+          style={{ 
+            background: 'var(--border)', 
+            padding: '12px', 
+            borderRadius: '8px', 
+            textAlign: 'center', 
+            fontWeight: 'bold', 
+            letterSpacing: '2px', 
+            marginBottom: '16px', 
+            cursor: 'pointer',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+          title="Nhấn để copy"
+        >
+          {copied ? <span style={{ color: 'var(--primary)', letterSpacing: 'normal' }}>Đã copy!</span> : (
+             <>
+               <span style={{ 
+                 overflow: 'hidden', 
+                 textOverflow: 'ellipsis', 
+                 whiteSpace: 'nowrap',
+                 maxWidth: '220px'
+               }}>{currentUser?.uid}</span>
+             </>
+          )}
         </div>
 
         {profile?.partnerUid ? (

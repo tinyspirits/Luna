@@ -252,7 +252,7 @@ const Home = () => {
 
       {/* Day Strip Header - Month title + Calendar icon */}
       <div className="day-strip-header">
-        <h2>{format(weekDays[3] || today, "d 'tháng' M", { locale: vi })}</h2>
+        <h2>{format(weekDays[3] || today, "d 'tháng' M, yyyy", { locale: vi })}</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button className="calendar-icon-btn" onClick={() => { handleWeekSwipe(1); }} title="Tuần trước">
             <ChevronLeft size={18} />
