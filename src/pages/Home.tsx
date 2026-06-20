@@ -1000,7 +1000,7 @@ const Home = () => {
 
       {showHistoryModal && (
         <CycleCalendarModal
-          cycles={allCycles}
+          existingCycles={allCycles}
           onClose={() => setShowHistoryModal(false)}
           onSave={handleAddHistory}
         />
