@@ -9,6 +9,7 @@ import Settings from './pages/Settings';
 import Insights from './pages/Insights';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
 import { useEffect, useState } from 'react';
+import { analyzeImageBrightness } from './utils/colorUtils';
 
 // Wrapper để quản lý Background theo cá nhân hóa
 const ThemeWrapper = ({ children }: { children: ReactElement }) => {
@@ -17,23 +18,45 @@ const ThemeWrapper = ({ children }: { children: ReactElement }) => {
   
   useEffect(() => {
     let bg = profile?.themeBackground;
-    
-    // Nếu chế độ là local, lấy chuỗi base64 từ LocalStorage
+    let imageSource = '';
     if (bg === 'local' && currentUser) {
       const localBg = localStorage.getItem(`custom_bg_${currentUser.uid}`);
       if (localBg) {
         bg = `url(${localBg})`;
+        imageSource = localBg;
       } else {
         bg = 'var(--background)'; // Fallback nếu không thấy ảnh
       }
+    } else if (bg && bg.startsWith('url(')) {
+      // Trích xuất URL từ chuỗi url('...')
+      const match = bg.match(/url\(['"]?(.*?)['"]?\)/);
+      if (match) imageSource = match[1];
+    } else if (bg && bg.startsWith('http')) {
+       imageSource = bg;
+       bg = `url(${bg})`;
     }
 
-    if (bg && bg !== 'var(--background)') {
+    if (bg && bg !== 'var(--background)' && !bg.includes('gradient')) {
       document.body.style.background = 'transparent';
       setBgImage(bg);
+      
+      // Phân tích độ sáng ảnh
+      if (imageSource) {
+        analyzeImageBrightness(imageSource).then(theme => {
+          if (theme === 'light') {
+            document.body.classList.add('theme-light');
+            document.body.classList.remove('theme-dark');
+          } else {
+            document.body.classList.add('theme-dark');
+            document.body.classList.remove('theme-light');
+          }
+        });
+      }
     } else {
-      document.body.style.background = 'var(--background)';
+      document.body.style.background = bg && bg !== 'var(--background)' ? bg : 'var(--background)';
       setBgImage(null);
+      // Reset về theme mặc định của OS
+      document.body.classList.remove('theme-light', 'theme-dark');
     }
   }, [profile?.themeBackground, currentUser]);
   

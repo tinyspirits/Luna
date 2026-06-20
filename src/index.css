@@ -33,6 +33,24 @@
   }
 }
 
+body.theme-light {
+  color-scheme: light !important;
+  --background: #f5f6fa;
+  --surface: rgba(255, 255, 255, 0.65);
+  --text-main: #2f3640;
+  --text-muted: #576574;
+  --border: rgba(220, 221, 225, 0.5);
+}
+
+body.theme-dark {
+  color-scheme: dark !important;
+  --background: #1e1e24;
+  --surface: rgba(43, 43, 54, 0.5);
+  --text-main: #f1f2f6;
+  --text-muted: #c8d6e5;
+  --border: rgba(255, 255, 255, 0.2);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -186,9 +204,11 @@ p { color: var(--text-muted); font-size: 0.95rem; }
 
 /* Calendar Styles */
 .calendar-cell {
-  padding: 10px 0;
+  aspect-ratio: 1;
   border-radius: 50%;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s;
 }
 

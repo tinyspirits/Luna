@@ -134,7 +134,8 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
     }
 
     return {
-      padding: '10px 0', borderRadius: '50%', cursor: inMonth ? 'pointer' : 'default',
+      aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      borderRadius: '50%', cursor: inMonth ? 'pointer' : 'default',
       background, color, border, fontWeight, boxShadow, opacity,
       fontSize: '0.9rem', transition: 'all 0.15s',
     };

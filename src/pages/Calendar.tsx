@@ -73,7 +73,7 @@ const CalendarPage = () => {
               <div 
                 key={day.toString()} 
                 className={`calendar-cell ${!isSameMonth(day, monthStart) ? 'disabled' : ''} ${isSameDay(day, new Date()) ? 'today' : ''} ${isPeriod ? 'period' : ''} ${isOvulation ? 'ovulation' : ''} ${isFertile ? 'fertile' : ''} ${isLow ? 'low-chance' : ''} ${isSafe ? 'safe' : ''}`}
-                style={{ position: 'relative', padding: '10px 0' }}
+                style={{ position: 'relative' }}
               >
                 {format(day, 'd')}
                 {isPeriod && <span style={{ position: 'absolute', bottom: '2px', right: '2px', fontSize: '0.7rem' }}>{profile?.periodIcon || '🩸'}</span>}
