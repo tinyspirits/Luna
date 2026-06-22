@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
   startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths,
@@ -183,7 +184,7 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
     }
   };
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
@@ -291,7 +292,8 @@ const CycleCalendarModal = ({ onSave, onClose, existingCycles }: Props) => {
           <button onClick={handleSave} className="btn-primary" style={{ flex: 1 }} disabled={selectedDays.length === 0}>Lưu chu kỳ</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

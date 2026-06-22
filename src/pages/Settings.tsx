@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { signOut, updatePassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -394,7 +395,7 @@ const Settings = () => {
       </div>
 
       {/* Modal xác nhận hủy kết nối */}
-      {showUnlinkConfirm && (
+      {showUnlinkConfirm && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="card" style={{ width: '100%', maxWidth: '320px', textAlign: 'center', padding: '24px' }}>
             <h3 style={{ margin: '0 0 12px 0' }}>Hủy kết nối?</h3>
@@ -406,7 +407,8 @@ const Settings = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
