@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getLatestCycle, startNewCycle, addHistoricalCycle, getAllCycles } from '../services/firestore';
 import type { Cycle } from '../services/firestore';
 import { getGlobalCycleDay, getGlobalPregnancyChance, calculateSmartPredictions, isDatePredicted, getNextEvents } from '../utils/cycleCalculations';
-import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { differenceInDays, format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval, startOfDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
 import CycleCalendarModal from '../components/CycleCalendarModal';
@@ -111,7 +111,7 @@ const Home = () => {
   const handleStartPeriod = async () => {
     if (!currentUser) return;
     setLoading(true);
-    await startNewCycle(currentUser.uid, new Date(), { averageCycleLength: 28, averagePeriodLength: 5 });
+    await startNewCycle(currentUser.uid, startOfDay(new Date()), { averageCycleLength: 28, averagePeriodLength: 5 });
     const [data, history] = await Promise.all([
       getLatestCycle(currentUser.uid),
       getAllCycles(currentUser.uid)
@@ -394,21 +394,33 @@ const Home = () => {
                 <h2 style={{ fontSize: '2.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1.2, fontWeight: 800, textAlign: 'center' }}>
                   Kỳ kinh
                 </h2>
-                <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem', textAlign: 'center' }}>
+                <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem', textAlign: 'center', marginBottom: '12px' }}>
                   có thể bắt đầu<br/>hôm nay
                 </span>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleStartPeriod(); }}
+                  style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 4px 10px rgba(232, 67, 147, 0.4)' }}
+                >
+                  Xác nhận
+                </button>
               </>
             ) : (
               <>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
                   Kỳ kinh chậm
                 </span>
-                <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1, fontWeight: 800 }}>
+                <h2 style={{ fontSize: '3.5rem', margin: '0', color: 'var(--primary)', lineHeight: 1, fontWeight: 800 }}>
                   {Math.abs(daysUntilNextPeriod)}
                 </h2>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem', marginBottom: '8px' }}>
                   ngày
                 </span>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleStartPeriod(); }}
+                  style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.85rem', boxShadow: '0 4px 10px rgba(232, 67, 147, 0.4)' }}
+                >
+                  Đã có kinh
+                </button>
               </>
             )
           ) : isPredicted ? (
