@@ -435,7 +435,7 @@ const Home = () => {
                   </span>
                 </>
               ) : daysUntilNextPeriod !== null && daysUntilNextOvulation !== null && daysUntilNextPeriod < daysUntilNextOvulation ? (
-                daysUntilNextPeriod === 0 ? (
+                daysUntilNextPeriod === 0 || daysUntilNextPeriod === 1 ? (
                   <>
                     <h2 style={{ fontSize: '2.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1.2, fontWeight: 800, textAlign: 'center' }}>
                       Kỳ kinh
