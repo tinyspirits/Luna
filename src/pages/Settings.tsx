@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signOut } from 'firebase/auth';
+import { signOut, updatePassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { linkPartner, updateUserProfile, unlinkPartner } from '../services/firestore';
@@ -25,6 +25,32 @@ const Settings = () => {
   const [editingPartnerName, setEditingPartnerName] = useState(false);
   const [newPartnerName, setNewPartnerName] = useState('');
   const [copied, setCopied] = useState(false);
+  const [newPassword, setPasswordForChange] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!currentUser) return;
+    if (newPassword.length < 6) {
+      alert('Mật khẩu mới phải có ít nhất 6 ký tự.');
+      return;
+    }
+    
+    setChangingPassword(true);
+    try {
+      await updatePassword(currentUser, newPassword);
+      alert('Đổi mật khẩu thành công!');
+      setPasswordForChange('');
+    } catch (error: any) {
+      console.error('Lỗi đổi mật khẩu:', error);
+      if (error.code === 'auth/requires-recent-login') {
+        alert('Phiên đăng nhập đã cũ. Vui lòng đăng xuất và đăng nhập lại để đổi mật khẩu.');
+      } else {
+        alert('Có lỗi xảy ra: ' + error.message);
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const handleCopyCode = () => {
     if (currentUser?.uid) {
@@ -117,6 +143,26 @@ const Settings = () => {
       <div className="card">
         <h2>Tài khoản của bạn</h2>
         <p style={{ marginBottom: '16px' }}><strong>Email:</strong> {currentUser?.email}</p>
+
+        <div style={{ marginBottom: '24px', padding: '16px', border: '1px solid var(--border)', borderRadius: '8px' }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>Đổi mật khẩu</h3>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <input 
+              type="password" 
+              placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
+              value={newPassword}
+              onChange={(e) => setPasswordForChange(e.target.value)}
+              style={{ flex: 1, minWidth: '200px', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
+            />
+            <button 
+              className="btn-primary" 
+              onClick={handleChangePassword}
+              disabled={changingPassword || !newPassword}
+            >
+              {changingPassword ? 'Đang xử lý...' : 'Cập nhật'}
+            </button>
+          </div>
+        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
           <label style={{ fontWeight: 600 }}>Giới tính:</label>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,9 +24,32 @@ const Auth = () => {
       }
       navigate('/');
     } catch (err: any) {
-      setError('Lỗi kết nối. Vui lòng thử lại sau.');
+      setError('Lỗi kết nối hoặc thông tin không chính xác. Vui lòng thử lại.');
     }
     setLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Vui lòng nhập email của bạn ở ô trên để lấy lại mật khẩu.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setError('');
+      alert('Email khôi phục mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn!');
+    } catch (err: any) {
+      if (err.code === 'auth/user-not-found') {
+        setError('Email này chưa được đăng ký trong hệ thống!');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Định dạng email không hợp lệ!');
+      } else {
+        setError('Lỗi: ' + err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,17 +84,30 @@ const Auth = () => {
             <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500 }}>Mật khẩu</label>
             <input 
               type="password" 
-              required 
+              required={!isLogin} 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}
             />
           </div>
 
+          {isLogin && (
+            <div style={{ textAlign: 'right', marginTop: '-8px' }}>
+              <button 
+                type="button" 
+                onClick={handleForgotPassword}
+                disabled={loading}
+                style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.9rem', padding: 0 }}
+              >
+                Quên mật khẩu?
+              </button>
+            </div>
+          )}
+
           <button 
             className="btn-primary" 
             type="submit" 
-            disabled={loading}
+            disabled={loading || (isLogin && !password && !email)}
             style={{ width: '100%', padding: '14px', fontSize: '1.1rem', marginBottom: '16px' }}
           >
             {loading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
@@ -83,7 +119,7 @@ const Auth = () => {
             type="button"
             className="btn-secondary" 
             style={{ width: '100%', background: 'transparent', border: '1px solid var(--border)' }}
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => { setIsLogin(!isLogin); setError(''); }}
           >
             {isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'}
           </button>
