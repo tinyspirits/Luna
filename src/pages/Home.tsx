@@ -388,6 +388,29 @@ const Home = () => {
                 {(daysUntilNextPeriod !== null && daysUntilNextPeriod <= 3) ? daysUntilNextPeriod : daysUntilNextOvulation} ngày nữa
               </h2>
             </>
+          ) : isSelectedToday && daysUntilNextPeriod !== null && daysUntilNextPeriod <= 1 ? (
+            daysUntilNextPeriod === 0 || daysUntilNextPeriod === 1 ? (
+              <>
+                <h2 style={{ fontSize: '2.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1.2, fontWeight: 800, textAlign: 'center' }}>
+                  Kỳ kinh
+                </h2>
+                <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem', textAlign: 'center' }}>
+                  có thể bắt đầu<br/>hôm nay
+                </span>
+              </>
+            ) : (
+              <>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
+                  Kỳ kinh chậm
+                </span>
+                <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1, fontWeight: 800 }}>
+                  {Math.abs(daysUntilNextPeriod)}
+                </h2>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem' }}>
+                  ngày
+                </span>
+              </>
+            )
           ) : isPredicted ? (
             <>
               <span style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1rem', marginBottom: '8px' }}>
@@ -435,40 +458,17 @@ const Home = () => {
                   </span>
                 </>
               ) : daysUntilNextPeriod !== null && daysUntilNextOvulation !== null && daysUntilNextPeriod < daysUntilNextOvulation ? (
-                daysUntilNextPeriod === 0 || daysUntilNextPeriod === 1 ? (
-                  <>
-                    <h2 style={{ fontSize: '2.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1.2, fontWeight: 800, textAlign: 'center' }}>
-                      Kỳ kinh
-                    </h2>
-                    <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem', textAlign: 'center' }}>
-                      có thể bắt đầu<br/>hôm nay
-                    </span>
-                  </>
-                ) : daysUntilNextPeriod < 0 ? (
-                  <>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
-                      Kỳ kinh chậm
-                    </span>
-                    <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1, fontWeight: 800 }}>
-                      {Math.abs(daysUntilNextPeriod)}
-                    </h2>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem' }}>
-                      ngày
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
-                      Hành kinh sau
-                    </span>
-                    <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1, fontWeight: 800 }}>
-                      {daysUntilNextPeriod}
-                    </h2>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem' }}>
-                      ngày nữa
-                    </span>
-                  </>
-                )
+                <>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>
+                    Hành kinh sau
+                  </span>
+                  <h2 style={{ fontSize: '3.5rem', margin: '4px 0', color: 'var(--primary)', lineHeight: 1, fontWeight: 800 }}>
+                    {daysUntilNextPeriod}
+                  </h2>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem' }}>
+                    ngày nữa
+                  </span>
+                </>
               ) : (
                 <>
                   <h2 style={{ fontSize: '3.5rem', margin: 0, color: 'var(--primary)', lineHeight: 1 }}>
