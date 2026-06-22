@@ -121,7 +121,8 @@ const Insights = () => {
   const confidenceText = prediction.confidence === 'high' ? '🟢 Rất chính xác' : prediction.confidence === 'medium' ? '🟡 Khá chính xác' : '🔴 Cần thêm dữ liệu';
 
   return (
-    <div className="animate-fade-in">
+    <>
+      <div className="animate-fade-in">
       <h1>Phân tích sức khỏe</h1>
 
       {/* Điểm sức khỏe */}
@@ -332,6 +333,8 @@ const Insights = () => {
         </div>
       </div>
 
+      </div>
+
       {/* Modal xác nhận xóa */}
       {cycleToDelete && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -345,7 +348,7 @@ const Insights = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
