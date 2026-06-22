@@ -24,7 +24,7 @@ const bleedingMap: Record<string, string> = { 'light': 'Ít', 'medium': 'Vừa',
 
 const Log = () => {
   const { currentUser, viewingUid, usePartnerData } = useAuth();
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [bleeding, setBleeding] = useState<'light' | 'medium' | 'heavy' | null>(null);
   const [discharge, setDischarge] = useState<string | null>(null);
   const [symptoms, setSymptoms] = useState<string[]>([]);
