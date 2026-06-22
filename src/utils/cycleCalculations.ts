@@ -45,12 +45,21 @@ export const calculateSmartPredictions = (
     }
 
     if (cycleLengths.length > 0) {
-      avgCycleLength = Math.round(
-        cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length
-      );
+      // Giống Flo: Sử dụng tối đa 6 chu kỳ gần nhất để dự đoán, đánh trọng số cao cho các chu kỳ mới nhất
+      const recentCycles = cycleLengths.slice(-6);
+      let totalWeight = 0;
+      let weightedSum = 0;
+      
+      recentCycles.forEach((len, idx) => {
+        const weight = idx + 1; // Chu kỳ cũ nhất trong mảng = 1, mới nhất = mảng.length
+        weightedSum += len * weight;
+        totalWeight += weight;
+      });
+      
+      avgCycleLength = Math.round(weightedSum / totalWeight);
 
-      // Kiểm tra độ đều: độ lệch chuẩn > 7 ngày → không đều
-      const mean = avgCycleLength;
+      // Kiểm tra độ đều trên toàn bộ chu kỳ: độ lệch chuẩn > 7 ngày → không đều
+      const mean = cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length;
       const variance =
         cycleLengths.reduce((acc, l) => acc + Math.pow(l - mean, 2), 0) / cycleLengths.length;
       const stdDev = Math.sqrt(variance);
