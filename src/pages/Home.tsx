@@ -397,12 +397,14 @@ const Home = () => {
                 <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem', textAlign: 'center', marginBottom: '12px' }}>
                   có thể bắt đầu<br/>hôm nay
                 </span>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleStartPeriod(); }}
-                  style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 4px 10px rgba(232, 67, 147, 0.4)' }}
-                >
-                  Xác nhận
-                </button>
+                {!usePartnerData && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleStartPeriod(); }}
+                    style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 4px 10px rgba(232, 67, 147, 0.4)' }}
+                  >
+                    Xác nhận
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -415,12 +417,14 @@ const Home = () => {
                 <span style={{ color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem', marginBottom: '8px' }}>
                   ngày
                 </span>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleStartPeriod(); }}
-                  style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.85rem', boxShadow: '0 4px 10px rgba(232, 67, 147, 0.4)' }}
-                >
-                  Đã có kinh
-                </button>
+                {!usePartnerData && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleStartPeriod(); }}
+                    style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.85rem', boxShadow: '0 4px 10px rgba(232, 67, 147, 0.4)' }}
+                  >
+                    Đã có kinh
+                  </button>
+                )}
               </>
             )
           ) : isPredicted ? (
