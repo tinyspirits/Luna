@@ -190,9 +190,10 @@ export const getGlobalPregnancyChance = (currentDate: Date, cycles: Cycle[]): Pr
   
   // Check historical/current cycles
   for (const c of cycles) {
+    const cycleStart = startOfDay(c.startDate);
     const isBleeding = isWithinInterval(currentDate, {
-      start: c.startDate,
-      end: addDays(c.startDate, 4) // assume 5 days
+      start: cycleStart,
+      end: addDays(cycleStart, 4) // assume 5 days
     });
     if (isBleeding) return 'Đang Hành Kinh';
 
@@ -237,12 +238,13 @@ export const getGlobalPregnancyChance = (currentDate: Date, cycles: Cycle[]): Pr
   return 'An toàn';
 };
 export const getPregnancyChance = (currentDate: Date, cycle: Cycle): PregnancyChance => {
+  const cycleStart = startOfDay(cycle.startDate);
   const isBleeding = isWithinInterval(currentDate, {
     start: cycle.expectedNextPeriod,
     end: addDays(cycle.expectedNextPeriod, 4)
   }) || isWithinInterval(currentDate, {
-    start: cycle.startDate,
-    end: addDays(cycle.startDate, 4)
+    start: cycleStart,
+    end: addDays(cycleStart, 4)
   });
 
   if (isBleeding) return 'Đang Hành Kinh';

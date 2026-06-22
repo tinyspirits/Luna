@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getAllCycles, deleteCycle, getAllDailyLogs } from '../services/firestore';
 import type { Cycle, DailyLog } from '../services/firestore';
 import { calculateSmartPredictions } from '../utils/cycleCalculations';
@@ -121,7 +122,8 @@ const Insights = () => {
   const confidenceText = prediction.confidence === 'high' ? '🟢 Rất chính xác' : prediction.confidence === 'medium' ? '🟡 Khá chính xác' : '🔴 Cần thêm dữ liệu';
 
   return (
-    <div className="animate-fade-in">
+    <>
+      <div className="animate-fade-in">
       <h1>Phân tích sức khỏe</h1>
 
       {/* Điểm sức khỏe */}
@@ -332,8 +334,10 @@ const Insights = () => {
         </div>
       </div>
 
+      </div>
+
       {/* Modal xác nhận xóa */}
-      {cycleToDelete && (
+      {cycleToDelete && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="card" style={{ width: '100%', maxWidth: '320px', textAlign: 'center', padding: '24px' }}>
             <h3 style={{ margin: '0 0 12px 0' }}>Xác nhận xóa</h3>
@@ -343,9 +347,10 @@ const Insights = () => {
               <button onClick={confirmDelete} className="btn-primary" style={{ flex: 1, background: 'var(--danger)' }}>Xóa</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 
